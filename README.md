@@ -1,0 +1,36 @@
+# umbriel.el
+
+An Emacs client for [umbriel](https://github.com/davidlee/umbriel), a Wayland
+compositor. It talks to the compositor's JSON socket (no binary is executed)
+and shows workspaces, scratchpads and windows in a `*umbriel*` buffer built on
+`magit-section`, with row actions, plus a hook that focuses the frame an
+`emacsclient` reuses.
+
+## Requirements
+
+- Emacs 30.1 or later
+- `magit-section` 4.0 or later
+- a running umbriel compositor (the socket path comes from the environment)
+
+## Install
+
+From a checkout (no package archive yet):
+
+```elisp
+(add-to-list 'load-path "~/dev/umbriel.el/umbriel")
+(require 'umbriel-buffer)   ; M-x umbriel opens *umbriel*
+(require 'umbriel-focus)    ; focus the emacsclient frame
+```
+
+The package binds no keys. See [docs/umbriel.md](docs/umbriel.md) for the
+commands, faces, row actions and the design notes.
+
+## Development
+
+```sh
+nix develop        # Emacs with magit-section, just, ripgrep
+just check         # lint (paren check + byte-compile, warnings are errors) + tests
+```
+
+Layout: `umbriel/` the library, `umbriel/test/` the ERT suites,
+`dev/umbriel-test-runner.el` the batch runner, `bin/` the paren checker.
