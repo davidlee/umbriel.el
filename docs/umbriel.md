@@ -213,7 +213,6 @@ under `C-c u` (and `SPC u` on its meow leader):
 | `C-c u u` | `umbriel` | open `*umbriel*` |
 | `C-c u w` | `umbriel-switch-workspace` | switch workspace, chosen with `completing-read` |
 | `C-c u l` | `umbriel-set-active-layout` | set the layout of the active workspace on the output under the pointer |
-| `C-c u f` | `umbriel-focus-frame` | focus this frame (see below) |
 
 `C-c u w` prompts at once when the stream is open and workspaces are held.
 Otherwise it refreshes first and prompts when the reply lands. The workspace
@@ -280,7 +279,7 @@ one-time permission the compositor hands out). `emacsclient` brings none, so
 when it reuses a frame the server's `select-frame-set-input-focus` can leave
 that frame behind the terminal. Only the compositor can focus it.
 
-`umbriel-focus-frame` runs on `server-switch-hook` and on `C-c u f`, for
+`umbriel-focus-frame` runs on `server-switch-hook` (also callable with `M-x`), for
 `pgtk` frames only:
 
 ```
