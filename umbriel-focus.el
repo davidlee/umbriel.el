@@ -33,7 +33,7 @@
 ;;; Code:
 
 (require 'seq)
-(require 'umbriel)
+(require 'umbriel-ipc)
 
 (defun umbriel-window-id (windows pid title)
   "Id of the window in WINDOWS that PID owns and that bears TITLE.

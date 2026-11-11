@@ -1,4 +1,4 @@
-load_path := "-L umbriel -L umbriel/test -L dev"
+load_path := "-L . -L test -L dev"
 
 check: lint test
 
@@ -9,7 +9,7 @@ lint:
     set -euo pipefail
     out=$(mktemp -d)
     trap 'rm -rf "$out"' EXIT
-    for f in umbriel/*.el umbriel/test/*.el dev/*.el; do
+    for f in *.el test/*.el dev/*.el; do
         bin/elisp-locate-paren-error "$f" >/dev/null
         emacs -Q --batch {{load_path}} \
           --eval "(setq byte-compile-error-on-warn t)" \

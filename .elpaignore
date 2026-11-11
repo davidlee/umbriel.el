@@ -1,0 +1,8 @@
+bin
+dev
+docs
+test
+flake.nix
+flake.lock
+justfile
+AGENTS.md

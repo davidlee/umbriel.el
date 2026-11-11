@@ -14,13 +14,20 @@ and shows workspaces, scratchpads and windows in a `*umbriel*` buffer built on
 
 ## Install
 
-From a checkout (no package archive yet):
+There is no package archive yet. With `use-package` (Emacs 30's `:vc`):
 
 ```elisp
-(add-to-list 'load-path "~/dev/umbriel.el/umbriel")
-(require 'umbriel-buffer)   ; M-x umbriel opens *umbriel*
-(require 'umbriel-focus)
-(umbriel-focus-mode 1)      ; focus the frame emacsclient reuses
+(use-package umbriel
+  :vc (:url "https://github.com/davidlee/umbriel.el")
+  :config (umbriel-focus-mode 1))   ; focus the frame emacsclient reuses
+```
+
+Or from a checkout:
+
+```elisp
+(add-to-list 'load-path "~/dev/umbriel.el")
+(require 'umbriel)          ; M-x umbriel opens *umbriel*
+(umbriel-focus-mode 1)
 ```
 
 The package binds no keys. See [docs/umbriel.md](docs/umbriel.md) for the
@@ -33,7 +40,7 @@ nix develop        # Emacs with magit-section, just, ripgrep
 just check         # lint (paren check + byte-compile, warnings are errors) + tests
 ```
 
-Layout: `umbriel/` the library, `umbriel/test/` the ERT suites,
+Layout: the library at the root, `test/` the ERT suites,
 `dev/umbriel-test-runner.el` the batch runner, `bin/` the paren checker.
 
 ## License

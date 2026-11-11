@@ -4,9 +4,11 @@ Emacs Lisp package: an Emacs client for the umbriel Wayland compositor.
 
 ## Layout
 
-- `umbriel/` library: `umbriel.el` (socket client), `-model`, `-columns` (pure),
-  `-buffer` (UI), `-focus`. `-model` and `-columns` must not require the client.
-- `umbriel/test/` ERT suites; `dev/umbriel-test-runner.el` runs them.
+- Library at the root: `umbriel.el` (entry; loads the rest), `-ipc` (socket
+  client), `-model`, `-columns` (pure), `-buffer` (UI), `-focus`. `-model`
+  and `-columns` must not require the client.
+- `test/` ERT suites; `dev/umbriel-test-runner.el` runs them.
+- `.elpaignore` keeps non-library files out of package installs.
 - `docs/umbriel.md` design and usage notes.
 
 ## Gate

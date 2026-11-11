@@ -49,7 +49,7 @@
 ;;; Code:
 
 (require 'magit-section)
-(require 'umbriel)
+(require 'umbriel-ipc)
 (require 'umbriel-columns)
 (require 'umbriel-model)
 
@@ -110,12 +110,6 @@ Every `%' is doubled, because the result is a mode-line construct."
      (if skipped-text (format "%s · %s" text skipped-text) text))))
 
 ;;;; Rendering
-
-(defgroup umbriel nil
-  "Emacs client for the umbriel Wayland compositor."
-  :group 'applications
-  :prefix "umbriel-"
-  :link '(url-link "https://github.com/davidlee/umbriel.el"))
 
 (defface umbriel-buffer-active-window
   '((t :inherit isearch :extend t))

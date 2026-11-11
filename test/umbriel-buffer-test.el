@@ -47,7 +47,7 @@
 (require 'subr-x)
 (require 'eieio)
 (require 'magit-section)
-(require 'umbriel)
+(require 'umbriel-ipc)
 (require 'umbriel-model)
 (require 'umbriel-buffer)
 

@@ -23,19 +23,18 @@
 
 ;; Batch runner for `just test':
 ;;
-;;   emacs -Q --batch -L umbriel -L umbriel/test -L dev \
+;;   emacs -Q --batch -L . -L test -L dev \
 ;;     -l umbriel-test-runner -f umbriel-test-runner-run-batch-and-exit
 ;;
-;; Loads every `*-test.el' under umbriel/test/, prints the ERT summary,
+;; Loads every `*-test.el' under test/, prints the ERT summary,
 ;; and exits non-zero on any unexpected result, any load error, or when no
 ;; test was loaded at all (an empty run must not report green).
 ;;
 ;; The suite directory is resolved from this file's location, not from
 ;; `default-directory'.
 ;;
-;; This feature is deliberately not named `umbriel-test': that is the
-;; client suite's own feature, and a runner skipping already-provided
-;; features would then silently skip the client suite.
+;; This feature is deliberately not named after any suite: a runner
+;; skipping already-provided features would then silently skip it.
 
 ;;; Code:
 
@@ -53,8 +52,8 @@
   "Repository root, resolved from this file's location (dev/).")
 
 (defun umbriel-test-runner--suite-files ()
-  "Absolute paths of every `*-test.el' under umbriel/test/."
-  (directory-files (expand-file-name "umbriel/test" umbriel-test-runner--repo-root)
+  "Absolute paths of every `*-test.el' under test/."
+  (directory-files (expand-file-name "test" umbriel-test-runner--repo-root)
                    t "-test\\.el\\'"))
 
 (defun umbriel-test-runner--load-suites ()

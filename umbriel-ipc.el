@@ -1,13 +1,6 @@
-;;; umbriel.el --- Talk to umbriel over its socket -*- lexical-binding: t; -*-
+;;; umbriel-ipc.el --- Talk to umbriel over its socket -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 David Lee
-
-;; Author: David Lee <dav@davlee.com>
-;; Maintainer: David Lee <dav@davlee.com>
-;; Version: 0.1.0
-;; Package-Requires: ((emacs "30.1") (magit-section "4.0"))
-;; Keywords: comm, tools
-;; URL: https://github.com/davidlee/umbriel.el
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -188,6 +181,12 @@ CALLBACK receives the first failure, or the last success."
 ;; One record, written only by the three functions below.  Kept as a
 ;; plain plist so it can be `let'-bound; nil reads as the initial state,
 ;; which is what a fresh Emacs starts from.
+
+(defgroup umbriel nil
+  "Emacs client for the umbriel Wayland compositor."
+  :group 'applications
+  :prefix "umbriel-"
+  :link '(url-link "https://github.com/davidlee/umbriel.el"))
 
 (defvar umbriel--state nil
   "The held state: a plist of :windows, :workspaces, :status, :skipped.
@@ -470,5 +469,5 @@ alone: only the stream speaks for the stream."
   (when (eq (car result) :failure)
     (message "%s" (umbriel-failure-message result))))
 
-(provide 'umbriel)
-;;; umbriel.el ends here
+(provide 'umbriel-ipc)
+;;; umbriel-ipc.el ends here

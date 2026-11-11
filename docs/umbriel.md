@@ -1,17 +1,18 @@
 # umbriel client
 
 umbriel is a Wayland compositor. This package lets Emacs talk to it over its
-IPC (inter-process communication) socket, from five files in `umbriel/`:
+IPC (inter-process communication) socket, from these files:
 
 | File | Owns |
 | --- | --- |
-| `umbriel.el` | the socket client: requests, the event stream, held state, failure kinds |
+| `umbriel.el` | the package entry: loads the rest |
+| `umbriel-ipc.el` | the socket client: requests, the event stream, held state, failure kinds |
 | `umbriel-model.el` | pure functions: grouping, labels, workspace selectors |
 | `umbriel-columns.el` | pure layout of cells into aligned columns |
 | `umbriel-buffer.el` | the `*umbriel*` buffer, row actions, global commands |
 | `umbriel-focus.el` | focusing the frame `emacsclient` reuses |
 
-Only `umbriel.el` touches the socket. The buffer and the focus hook are its
+Only `umbriel-ipc.el` touches the socket. The buffer and the focus mode are its
 two consumers.
 
 Records cited below (`DEC-n` for a decision, `IDE-n` for a backlog idea)
@@ -63,7 +64,7 @@ reconcile.
 
 ```
  compositor ──snapshot──▶ held state ──hook──▶ repaint timer (0.1 s) ──▶ *umbriel*
-                          (umbriel.el)      coalesces bursts          redraws only while
+                       (umbriel-ipc.el)     coalesces bursts          redraws only while
                                                                          a window shows it
 ```
 

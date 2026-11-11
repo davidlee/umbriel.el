@@ -670,7 +670,7 @@ Unassigned group, which is last."
                                           " (unless (require 'umbriel-model nil t)"
                                           " (kill-emacs 3))"
                                           " (princ (format \"%S\""
-                                          " (featurep 'umbriel))))"))))
+                                          " (featurep 'umbriel-ipc))))"))))
                      (should (equal 0 status))
                      (buffer-string)))))
     (should (equal "nil" (string-trim output)))))
