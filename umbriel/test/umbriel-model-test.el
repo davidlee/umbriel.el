@@ -662,6 +662,9 @@ Unassigned group, which is last."
                                   nil t nil
                                   "-Q" "--batch"
                                   "-L" umbriel-model-test--model-dir
+                                  ;; A stale .elc beside the source must
+                                  ;; not shadow it, nor warn into OUTPUT.
+                                  "--eval" "(setq load-prefer-newer t)"
                                   "--eval"
                                   (concat "(progn"
                                           " (unless (require 'umbriel-model nil t)"
