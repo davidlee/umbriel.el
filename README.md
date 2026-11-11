@@ -12,6 +12,8 @@ and shows workspaces, scratchpads and windows in a `*umbriel*` buffer built on
 - `magit-section` 4.0 or later
 - a running umbriel compositor (the socket path comes from the environment)
 
+![img](./img/screenshot.png)
+
 ## Install
 
 There is no package archive yet. With `use-package` (Emacs 30's `:vc`):
