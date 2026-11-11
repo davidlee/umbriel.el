@@ -31,6 +31,8 @@
 (require 'cl-lib)
 (require 'umbriel-focus)
 
+(defvar server-switch-hook)  ; special, so the tests can `let' it
+
 (defconst umbriel-focus-test--windows
   '(((id . "theirs") (pid . 7) (title . "notes.org"))
     ((id . "other") (pid . 42) (title . "inbox"))
@@ -85,6 +87,22 @@
   (let ((failure '(:failure absent "/run/u/umbriel-wayland-1.sock")))
     (should (equal (cadr (umbriel-focus-test--run 'pgtk "notes.org" (list failure)))
                    (list (umbriel-failure-message failure))))))
+
+;;;; `umbriel-focus-mode'
+
+(ert-deftest umbriel-focus/loading-adds-no-hook ()
+  "Loading the library changes nothing until the mode is enabled."
+  (let ((server-switch-hook nil))
+    (load "umbriel-focus" nil t)
+    (should-not (memq #'umbriel-focus-frame server-switch-hook))))
+
+(ert-deftest umbriel-focus/mode-adds-and-removes-the-hook ()
+  (let ((server-switch-hook nil)
+        (umbriel-focus-mode nil))
+    (umbriel-focus-mode 1)
+    (should (memq #'umbriel-focus-frame server-switch-hook))
+    (umbriel-focus-mode -1)
+    (should-not (memq #'umbriel-focus-frame server-switch-hook))))
 
 (provide 'umbriel-focus-test)
 ;;; umbriel-focus-test.el ends here

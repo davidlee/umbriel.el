@@ -279,7 +279,8 @@ one-time permission the compositor hands out). `emacsclient` brings none, so
 when it reuses a frame the server's `select-frame-set-input-focus` can leave
 that frame behind the terminal. Only the compositor can focus it.
 
-`umbriel-focus-frame` runs on `server-switch-hook` (also callable with `M-x`), for
+`umbriel-focus-mode`, a global minor mode, runs `umbriel-focus-frame` on
+`server-switch-hook` (the command is also callable with `M-x`), for
 `pgtk` frames only:
 
 ```

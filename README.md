@@ -19,7 +19,8 @@ From a checkout (no package archive yet):
 ```elisp
 (add-to-list 'load-path "~/dev/umbriel.el/umbriel")
 (require 'umbriel-buffer)   ; M-x umbriel opens *umbriel*
-(require 'umbriel-focus)    ; focus the emacsclient frame
+(require 'umbriel-focus)
+(umbriel-focus-mode 1)      ; focus the frame emacsclient reuses
 ```
 
 The package binds no keys. See [docs/umbriel.md](docs/umbriel.md) for the

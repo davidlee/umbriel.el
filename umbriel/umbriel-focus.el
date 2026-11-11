@@ -59,8 +59,16 @@ WINDOWS is the reply to umbriel's `windows' query."
                                  #'umbriel-echo-failure)))
              (_ (umbriel-echo-failure result)))))))))
 
-;; Runs once the server has selected the frame showing the client's file.
-(add-hook 'server-switch-hook #'umbriel-focus-frame)
+;;;###autoload
+(define-minor-mode umbriel-focus-mode
+  "Focus the frame an emacsclient reuses, by asking umbriel.
+Runs `umbriel-focus-frame' on `server-switch-hook', which the server
+runs once it has selected the frame showing the client's file."
+  :global t
+  :group 'umbriel
+  (if umbriel-focus-mode
+      (add-hook 'server-switch-hook #'umbriel-focus-frame)
+    (remove-hook 'server-switch-hook #'umbriel-focus-frame)))
 
 (provide 'umbriel-focus)
 ;;; umbriel-focus.el ends here
