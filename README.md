@@ -30,8 +30,25 @@ Or from a checkout:
 (umbriel-focus-mode 1)
 ```
 
-The package binds no keys. See [docs/umbriel.md](docs/umbriel.md) for the
-commands, faces, row actions and the design notes.
+## Keys
+
+The `*umbriel*` buffer has its own keys in `umbriel-buffer-mode-map` (`?`
+lists them). Change them with `keymap-set`:
+
+```elisp
+(with-eval-after-load 'umbriel-buffer
+  (keymap-set umbriel-buffer-mode-map "f" #'umbriel-focus))
+```
+
+The package binds no global keys. `umbriel-command-map` holds the commands
+that work anywhere; bind it to a prefix of your choice:
+
+```elisp
+(keymap-global-set "C-c u" umbriel-command-map)  ; C-c u u, C-c u w, C-c u l
+```
+
+See [docs/umbriel.md](docs/umbriel.md) for the commands, options, faces, row
+actions and the design notes.
 
 ## Development
 

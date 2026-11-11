@@ -102,7 +102,7 @@ A multi-step action stops at its first failure.
 
 ## The `*umbriel*` buffer
 
-`M-x umbriel` (or `C-c u u`) opens it, creating the buffer and the stream
+`M-x umbriel` opens it, creating the buffer and the stream
 on first use. It is a `magit-section` tree: one section per workspace, its
 windows beneath, then one section per scratchpad holding windows, by name, and a
 final `Unassigned` section for windows that join neither. Sections fold as usual.
@@ -197,8 +197,8 @@ focused, with no focus step. `RET`, `t` and `k` refuse a workspace row
 (`Not a window`), and so does `P`. A pad heading has no window, so every key but
 `v` refuses it (`Not a window`).
 
-`P` offers the pads that hold windows, plus `umbriel-buffer-known-pads`
-(`main`), because the IPC lists no empty pads. Any other empty pad must be typed.
+`P` offers the pads that hold windows, plus the option `umbriel-buffer-known-pads`
+(`main`, `secondary`, `tertiary`), because the IPC lists no empty pads. Any other empty pad must be typed.
 Pads exist only as `[[scratchpad]]` entries in umbriel's config, so `P` cannot
 create one, and umbriel rejects a name it does not know. That failure comes after
 the focus step, so focus stays on the row's window.
@@ -206,16 +206,22 @@ the focus step, so focus stays on the row's window.
 There are no scroll keys: strip scrolling is a viewport action, not an action
 on the row at point (emacs-config:DEC-026). Use umbriel's own bindings.
 
-Global commands. The package binds no keys; the author's config binds them
-under `C-c u` (and `SPC u` on its meow leader):
+`?` shows the mode's help, which lists these keys as bound.
 
-| Key | Command | Does |
+Global commands. The package binds no global keys. `umbriel-command-map`
+(autoloaded) holds them for one prefix key of the user's choosing, e.g.
+`(keymap-global-set "C-c u" umbriel-command-map)`:
+
+| Key in the map | Command | Does |
 | --- | --- | --- |
-| `C-c u u` | `umbriel` | open `*umbriel*` |
-| `C-c u w` | `umbriel-switch-workspace` | switch workspace, chosen with `completing-read` |
-| `C-c u l` | `umbriel-set-active-layout` | set the layout of the active workspace on the output under the pointer |
+| `u` | `umbriel` | open `*umbriel*` |
+| `w` | `umbriel-switch-workspace` | switch workspace, chosen with `completing-read` |
+| `l` | `umbriel-set-active-layout` | set the layout of the active workspace on the output under the pointer |
 
-`C-c u w` prompts at once when the stream is open and workspaces are held.
+Messages that suggest a command name the user's key for it, or `M-x COMMAND`
+when it is unbound.
+
+`umbriel-switch-workspace` prompts at once when the stream is open and workspaces are held.
 Otherwise it refreshes first and prompts when the reply lands. The workspace
 and layout prompts list in display order (workspaces by output, then index;
 layouts in a fixed order); recency sorting is switched off for them.
@@ -265,7 +271,7 @@ the prompt, so a refused row never asks anything.
   between pads, take it out with `m`, then send it.
 - **Refusals.** A heading, an empty buffer or an entry no longer held gives
   `No umbriel row at point`. A window with no workspace cannot be switched to.
-  `L` refuses a pad window, which has no layout, and points to `C-c u l`.
+  `L` refuses a pad window, which has no layout, and points to `umbriel-set-active-layout`.
 
 ### `window-kill` kills the owning process
 

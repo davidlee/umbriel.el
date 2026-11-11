@@ -425,6 +425,21 @@ The calls land in `--send-all-calls'.  `umbriel-send' and
                   nil)))
        ,@body)))
 
+;; A hint names the user's key, so a test binds its own and expects it.
+(defmacro umbriel-buffer-test--with-key (map key command &rest body)
+  "Run BODY with KEY bound to COMMAND in a child of MAP's value.
+MAP is `global' for the global map, else a keymap variable's symbol."
+  (declare (indent 3))
+  (let ((saved (gensym "saved")) (child (gensym "child")))
+    `(let* ((,saved ,(if (eq map 'global) '(current-global-map) map))
+            (,child (make-sparse-keymap)))
+       (set-keymap-parent ,child ,saved)
+       (keymap-set ,child ,key ,command)
+       ,(if (eq map 'global)
+            `(unwind-protect (progn (use-global-map ,child) ,@body)
+               (use-global-map ,saved))
+          `(let ((,map ,child)) ,@body)))))
+
 (defmacro umbriel-buffer-test--with-prompts (&rest body)
   "Run BODY with the prompting functions faked.
 `completing-read' answers `--prompt-choice', `y-or-n-p' answers
@@ -547,16 +562,26 @@ callback or a timer is checked for never prompting."
                   (list :window (umbriel-buffer-test--window :workspace ""))
                   nil nil))))
 
+(defun umbriel-buffer-test--pad-window-layout-refusal ()
+  "What `L' says on a pad window."
+  (umbriel-buffer-test--refused
+   (assq 'umbriel-set-layout umbriel-buffer-actions)
+   (list :window (umbriel-buffer-test--window
+                  :workspace "" :scratchpad "signal"))
+   '((layout . "master"))
+   (umbriel-buffer-test--action-workspaces)))
+
 (ert-deftest umbriel-buffer--plan/layout-points-a-pad-window-elsewhere ()
-  "A pad window has no layout, so `L' names the key that sets one."
+  "A pad window has no layout, so `L' names the user's key that sets one."
+  (umbriel-buffer-test--with-key global "C-c z l" #'umbriel-set-active-layout
+    (should (umbriel-buffer-test--mentions-p
+             (umbriel-buffer-test--pad-window-layout-refusal) "C-c z l"))))
+
+(ert-deftest umbriel-buffer--plan/layout-hint-falls-back-to-m-x ()
+  "With the command unbound, the hint names it for `M-x'."
   (should (umbriel-buffer-test--mentions-p
-           (umbriel-buffer-test--refused
-            (assq 'umbriel-set-layout umbriel-buffer-actions)
-            (list :window (umbriel-buffer-test--window
-                           :workspace "" :scratchpad "signal"))
-            '((layout . "master"))
-            (umbriel-buffer-test--action-workspaces))
-           "C-c u l")))
+           (umbriel-buffer-test--pad-window-layout-refusal)
+           "M-x umbriel-set-active-layout")))
 
 (ert-deftest umbriel-buffer--target/reads-a-pad-heading ()
   "emacs-config:DEC-029: point on a pad heading targets that pad."
@@ -612,6 +637,18 @@ callback or a timer is checked for never prompting."
                            :workspace "" :scratchpad "signal"))
             (umbriel-buffer-test--action-workspaces))
            "already in a scratchpad")))
+
+(ert-deftest umbriel-buffer--plan/send-to-pad-names-the-move-key ()
+  "The way out of a pad is the buffer's move key, whatever it is bound to."
+  (umbriel-buffer-test--with-key umbriel-buffer-mode-map "M"
+      #'umbriel-move-to-workspace
+    (keymap-unset umbriel-buffer-mode-map "m" t)
+    (should (string-search
+             "with M first"
+             (umbriel-buffer-test--refused-send
+              (list :window (umbriel-buffer-test--window
+                             :workspace "" :scratchpad "signal"))
+              (umbriel-buffer-test--action-workspaces))))))
 
 (ert-deftest umbriel-buffer--plan/send-to-pad-refuses-a-workspace-row ()
   "A workspace row must not send whatever happens to be focused."
@@ -2925,7 +2962,9 @@ Each one leaves only after the previous replied successfully."
                   (should (= 1 (length calls)))
                   (cl-letf (((symbol-function 'active-minibuffer-window)
                              (lambda () (selected-window))))
-                    (funcall (nth 2 (car calls))))
+                    (umbriel-buffer-test--with-key global "C-c z w"
+                        #'umbriel-switch-workspace
+                      (funcall (nth 2 (car calls)))))
                   (should-not umbriel-buffer-test--prompts)
                   (should-not umbriel-buffer-test--send-all-calls)
                   (should (= 1 (length umbriel-buffer-test--messages)))
@@ -2933,7 +2972,7 @@ Each one leaves only after the previous replied successfully."
                            (car umbriel-buffer-test--messages) "retry"))
                   (should (umbriel-buffer-test--mentions-p
                            (car umbriel-buffer-test--messages)
-                           "C-c u w")))))))))))
+                           "C-c z w")))))))))))
 
 (ert-deftest umbriel-buffer/global-switch-echoes-a-refresh-failure ()
   "VT-3/EX-4: a failed refresh is echoed and schedules nothing."
@@ -3074,9 +3113,55 @@ a send to a pad, which refuses a pad window, gets a plain row instead."
                      ("e" . umbriel-cycle-extent)
                      ("E" . umbriel-cycle-extent-back)
                      ("g" . umbriel-buffer-refresh)
+                     ("?" . describe-mode)
                      ("q" . quit-window)))
     (should (eq (keymap-lookup umbriel-buffer-mode-map (car binding))
                 (cdr binding)))))
+
+(ert-deftest umbriel-buffer/mode-help-lists-the-row-keys ()
+  "`?' shows the mode's help, and the help lists the row keys."
+  (should (string-search "umbriel-toggle-floating"
+                         (substitute-command-keys
+                          (documentation 'umbriel-buffer-mode)))))
+
+(ert-deftest umbriel-buffer/command-map-binds-the-global-commands ()
+  "The prefix map a user binds once holds the commands that need no row."
+  (dolist (binding '(("u" . umbriel)
+                     ("w" . umbriel-switch-workspace)
+                     ("l" . umbriel-set-active-layout)))
+    (should (eq (keymap-lookup umbriel-command-map (car binding))
+                (cdr binding)))))
+
+(ert-deftest umbriel-buffer/command-map-is-autoloaded ()
+  "An init file can bind the prefix map before the library loads."
+  (let* ((dir (file-name-directory (locate-library "umbriel-buffer")))
+         ;; A fresh directory: an existing output file newer than the
+         ;; sources counts as up to date, and nothing is written to it.
+         (tmp (make-temp-file "umbriel-loaddefs" t))
+         (loaddefs (expand-file-name "loaddefs.el" tmp)))
+    (unwind-protect
+        (progn
+          (let ((inhibit-message t))
+            (loaddefs-generate dir loaddefs))
+          (with-temp-buffer
+            (should (equal 0 (call-process
+                              (expand-file-name invocation-name
+                                                invocation-directory)
+                              nil t nil "-Q" "--batch" "-l" loaddefs
+                              "--eval"
+                              (concat "(princ (list (keymap-lookup"
+                                      " umbriel-command-map \"w\")"
+                                      " (featurep 'umbriel-buffer)))"))))
+            (should (string-suffix-p "(umbriel-switch-workspace nil)"
+                                     (string-trim (buffer-string))))))
+      (delete-directory tmp t))))
+
+(ert-deftest umbriel-buffer/tunables-are-user-options ()
+  "What a user may want to change is customizable, so `setopt' works."
+  (dolist (option '(umbriel-buffer-known-pads
+                    umbriel-buffer-column-limits
+                    umbriel-buffer-title-min-width))
+    (should (custom-variable-p option))))
 
 (ert-deftest umbriel-buffer/scroll-keys-are-gone ()
   "emacs-config:DEC-026: the buffer keeps column moves and leaves scrolling to umbriel.

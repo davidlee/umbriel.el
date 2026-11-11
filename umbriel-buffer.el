@@ -244,12 +244,17 @@ In display order.")
 (defconst umbriel-buffer-flag-columns '(visible active focused)
   "The flags with a column each, so they line up; the rest share `flags'.")
 
-(defconst umbriel-buffer-column-limits '((app . 24) (title . 40))
+(defcustom umbriel-buffer-column-limits '((app . 24) (title . 40))
   "The widest each column may grow; a column left out is unlimited.
-A window showing the buffer replaces the title's limit with what fits it.")
+A window showing the buffer replaces the title's limit with what fits it."
+  :type '(alist :key-type (choice (const app) (const title))
+                :value-type natnum)
+  :group 'umbriel)
 
-(defconst umbriel-buffer-title-min-width 16
-  "The narrowest a window may make the title column.")
+(defcustom umbriel-buffer-title-min-width 16
+  "The narrowest a window may make the title column."
+  :type 'natnum
+  :group 'umbriel)
 
 (defconst umbriel-buffer-row-indent "  "
   "What a window row starts with, under its workspace's heading.")
@@ -671,6 +676,13 @@ already delivered."
 
 ;;;; Actions
 
+(defun umbriel-buffer--key (command &optional map)
+  "The key the user has bound to COMMAND, else `M-x COMMAND'.
+MAP names the keymap to search, a symbol; nil searches the active maps.
+Hints name keys this way because the package binds no global keys."
+  (substitute-command-keys
+   (format "%s\\[%s]" (if map (format "\\<%s>" map) "") command)))
+
 ;; A row key names an action, and most actions act on what the
 ;; compositor has focused, not on the row.  Acting on a row is therefore
 ;; three steps: capture the held entry the row shows, plan the requests
@@ -837,7 +849,9 @@ would act on the workspace's focus instead, often this Emacs
          (list act)))
       ('pointer-window
        (cond ((not window) "Not a window")
-             (pad "Already in a scratchpad; take it out with m first")
+             (pad (format "Already in a scratchpad; take it out with %s first"
+                          (umbriel-buffer--key 'umbriel-move-to-workspace
+                                               'umbriel-buffer-mode-map)))
              ((not workspace) "Window has no workspace")
              ((umbriel-buffer--off-pointer-p workspace workspaces)
               "Only a window on the output under the pointer can be sent")
@@ -848,7 +862,9 @@ would act on the workspace's focus instead, often this Emacs
              (pad (list act))
              (t "Window has no workspace")))
       ('active-workspace
-       (cond ((and pad (not switch)) "A pad window has no layout; use C-c u l")
+       (cond ((and pad (not switch))
+              (format "A pad window has no layout; use %s"
+                      (umbriel-buffer--key 'umbriel-set-active-layout)))
              ((not switch) "Window has no workspace")
              ((umbriel-buffer--off-pointer-p workspace workspaces)
               "The layout acts on the output under the pointer, not here")
@@ -894,10 +910,12 @@ The prompt offers the layouts in model order.  Empty input is a
       (user-error "No layout chosen"))
     (list (cons 'layout layout))))
 
-(defconst umbriel-buffer-known-pads '("main" "secondary" "tertiary")
+(defcustom umbriel-buffer-known-pads '("main" "secondary" "tertiary")
   "Pads the send prompt offers even while empty.
 The IPC names only pads holding windows.  A name here must also be a
-`[[scratchpad]]' in umbriel's config, the only way to create a pad.")
+`[[scratchpad]]' in umbriel's config, the only way to create a pad."
+  :type '(repeat string)
+  :group 'umbriel)
 
 (defun umbriel-buffer--pad-fields ()
   "The scratchpad field the user picks or types.
@@ -1022,9 +1040,11 @@ A refresh's reply may not prompt, so it schedules this instead (D-5);
 an active minibuffer asks for a retry, and so does the reply holding
 no workspace at all."
   (cond ((active-minibuffer-window)
-         (message "Minibuffer in use; retry with C-c u w"))
+         (message "Minibuffer in use; retry with %s"
+                  (umbriel-buffer--key 'umbriel-switch-workspace)))
         ((null (umbriel-workspaces))
-         (message "No umbriel workspace known; retry with C-c u w"))
+         (message "No umbriel workspace known; retry with %s"
+                  (umbriel-buffer--key 'umbriel-switch-workspace)))
         (t (umbriel-buffer--switch))))
 
 ;;;###autoload
@@ -1053,6 +1073,15 @@ The layout is prompted for at once: the choices need no held state
   (interactive)
   (umbriel-buffer--send-one "workspace-set-layout"
                                (umbriel-buffer--layout-fields)))
+
+;;;###autoload
+(defvar-keymap umbriel-command-map
+  :doc "The commands that need no row, for one prefix key of the user's.
+For example: (keymap-global-set \"C-c u\" umbriel-command-map)."
+  :prefix 'umbriel-command-map
+  "u" #'umbriel
+  "w" #'umbriel-switch-workspace
+  "l" #'umbriel-set-active-layout)
 
 ;;;; Mode
 
