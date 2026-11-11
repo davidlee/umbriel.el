@@ -29,12 +29,17 @@ package-lint:
       -f package-lint-batch-and-exit umbriel*.el
 
 # Docstring and comment style for the library files. checkdoc reports
-# without failing, so any `FILE:LINE:` report fails the recipe.
+# without failing, so any `FILE:LINE:` report fails the recipe. The
+# experimental imperative-verb check is off: docstrings here describe what
+# a function returns ("The face that marks ..."), which it misreads, and
+# Emacs 30 and 32 disagree on it.
 checkdoc:
     #!/usr/bin/env bash
     set -euo pipefail
     report=$(for f in umbriel*.el; do
-        emacs -Q --batch -L . --eval "(checkdoc-file \"$f\")" 2>&1
+        emacs -Q --batch -L . \
+          --eval "(setq checkdoc-verb-check-experimental-flag nil)" \
+          --eval "(checkdoc-file \"$f\")" 2>&1
     done | grep -E '^[^ ]+\.el:[0-9]+: ' || true)
     if [ -n "$report" ]; then echo "$report"; exit 1; fi
 
