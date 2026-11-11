@@ -809,8 +809,7 @@ addressing refuses a pad heading, which has no window (emacs-config:DEC-030).  A
 `workspace' row on a pad window with no workspace sends the action with
 FIELDS, the workspace the user picked.  A `pointer-window' row plans as
 a `focused' one, but refuses any row the action would not reach: it
-would act on the workspace's focus instead, often this Emacs
-(emacs-config:IMP-031)."
+would act on the workspace's focus instead, often this Emacs."
   (let* ((action (nth 1 spec))
          (addressing (nth 2 spec))
          (window (plist-get target :window))
@@ -934,7 +933,7 @@ know.  Empty input is a `user-error', as for a workspace."
     (list (cons 'scratchpad name))))
 
 (defun umbriel-buffer--confirm-kill (window)
-  "nil when the user confirms killing WINDOW, `declined' when not.
+  "Return nil when the user confirms killing WINDOW, `declined' when not.
 Emacs's own pid refuses at once, before any prompt: killing it would
 take the editor with it (emacs-config:DEC-019, F-19).  The prompt reuses
 the row's label, so compositor text arrives sanitised to one line; WINDOW was
@@ -1068,8 +1067,7 @@ from -- it says so instead (D-5, R-7)."
 ;;;###autoload
 (defun umbriel-set-active-layout ()
   "Set the layout of the workspace on the output under the pointer.
-The layout is prompted for at once: the choices need no held state
-(D-7)."
+The layout is prompted for at once: the choices need no held state."
   (interactive)
   (umbriel-buffer--send-one "workspace-set-layout"
                                (umbriel-buffer--layout-fields)))

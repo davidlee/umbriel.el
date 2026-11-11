@@ -16,6 +16,23 @@ lint:
           --eval "(setq byte-compile-dest-file-function (lambda (_) \"$out/out.elc\"))" \
           -f batch-byte-compile "$f"
     done
+    just package-lint checkdoc
+
+# The archive rules (headers, prefixes, versions) for the library files.
+package-lint:
+    emacs -Q --batch -L . --eval "(require 'package-lint)" \
+      --eval '(setq package-lint-main-file "umbriel.el")' \
+      -f package-lint-batch-and-exit umbriel*.el
+
+# Docstring and comment style for the library files. checkdoc reports
+# without failing, so any `FILE:LINE:` report fails the recipe.
+checkdoc:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    report=$(for f in umbriel*.el; do
+        emacs -Q --batch -L . --eval "(checkdoc-file \"$f\")" 2>&1
+    done | grep -E '^[^ ]+\.el:[0-9]+: ' || true)
+    if [ -n "$report" ]; then echo "$report"; exit 1; fi
 
 test:
     emacs -Q --batch {{load_path}} \

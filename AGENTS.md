@@ -14,7 +14,8 @@ Emacs Lisp package: an Emacs client for the umbriel Wayland compositor.
 ## Gate
 
 `just check` (inside `nix develop`) is green: lint (paren check, byte-compile
-with warnings as errors, no `.elc` written to the checkout) and tests.
+with warnings as errors, no `.elc` written to the checkout, package-lint,
+checkdoc) and tests.
 
 ## Elisp edits
 

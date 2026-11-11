@@ -1,0 +1,36 @@
+# `just check` (lint + tests) on the oldest supported Emacs and on master.
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs: ["30.1", snapshot]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs }}
+      - uses: extractions/setup-just@v2
+
+      # The recipes run `emacs -Q`, which loads no packages, so the
+      # dependencies reach it through EMACSLOADPATH (a trailing `:' keeps
+      # Emacs's own load path).
+      - name: Install dependencies
+        run: |
+          emacs --batch --eval "(progn
+            (require 'package)
+            (setq package-user-dir \"$HOME/elpa\")
+            (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\"))
+            (package-initialize)
+            (package-refresh-contents)
+            (dolist (p '(magit-section package-lint)) (package-install p)))"
+          echo "EMACSLOADPATH=$(find "$HOME/elpa" -mindepth 1 -maxdepth 1 -type d | paste -sd:):" >> "$GITHUB_ENV"
+
+      - run: just check

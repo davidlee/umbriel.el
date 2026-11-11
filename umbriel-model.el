@@ -189,8 +189,9 @@ present, raw as well."
         (cons 'output (or (alist-get 'output workspace) ""))))
 
 (defun umbriel-model-workspace-choices (workspaces)
-  "`(LABEL . WORKSPACE)' pairs for `completing-read', in display order.
-LABEL is `umbriel-model-workspace-label' without a window count."
+  "`(LABEL . WORKSPACE)' pairs of WORKSPACES, in display order.
+They are `completing-read' choices.  LABEL is
+`umbriel-model-workspace-label' without a window count."
   (mapcar (lambda (workspace)
             (cons (umbriel-model-workspace-label workspace) workspace))
           (sort workspaces :key #'umbriel-model--workspace-key)))

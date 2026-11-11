@@ -53,12 +53,14 @@ actions and the design notes.
 ## Development
 
 ```sh
-nix develop        # Emacs with magit-section, just, ripgrep
-just check         # lint (paren check + byte-compile, warnings are errors) + tests
+nix develop        # Emacs with magit-section and package-lint, just, ripgrep
+just check         # lint (parens, byte-compile with warnings as errors,
+                   # package-lint, checkdoc) + tests
 ```
 
 Layout: the library at the root, `test/` the ERT suites,
 `dev/umbriel-test-runner.el` the batch runner, `bin/` the paren checker.
+CI (`.github/workflows/check.yml`) runs `just check` on Emacs 30.1 and master.
 
 ## License
 
