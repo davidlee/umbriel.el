@@ -27,10 +27,13 @@ jobs:
           emacs --batch --eval "(progn
             (require 'package)
             (setq package-user-dir \"$HOME/elpa\")
+            ;; Emacs 30.1's built-in transient is older than magit wants.
+            (setq package-install-upgrade-built-in t)
             (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\"))
             (package-initialize)
             (package-refresh-contents)
-            (dolist (p '(magit-section package-lint)) (package-install p)))"
+            (dolist (p '(transient magit-section package-lint)) (package-install p)))"
+          echo "UMBRIEL_PACKAGE_DIR=$HOME/elpa" >> "$GITHUB_ENV"
           echo "EMACSLOADPATH=$(find "$HOME/elpa" -mindepth 1 -maxdepth 1 -type d | paste -sd:):" >> "$GITHUB_ENV"
 
       - run: just check

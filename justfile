@@ -19,8 +19,12 @@ lint:
     just package-lint checkdoc
 
 # The archive rules (headers, prefixes, versions) for the library files.
+# It checks Package-Requires against the packages Emacs knows; where -Q
+# leaves none known (CI), UMBRIEL_PACKAGE_DIR names a package dir to know.
 package-lint:
-    emacs -Q --batch -L . --eval "(require 'package-lint)" \
+    emacs -Q --batch -L . \
+      --eval "(when-let* ((dir (getenv \"UMBRIEL_PACKAGE_DIR\"))) (setq package-user-dir dir) (package-initialize))" \
+      --eval "(require 'package-lint)" \
       --eval '(setq package-lint-main-file "umbriel.el")' \
       -f package-lint-batch-and-exit umbriel*.el
 

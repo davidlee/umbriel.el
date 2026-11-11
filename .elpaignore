@@ -6,3 +6,4 @@ flake.nix
 flake.lock
 justfile
 AGENTS.md
+img
