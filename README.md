@@ -34,3 +34,7 @@ just check         # lint (paren check + byte-compile, warnings are errors) + te
 
 Layout: `umbriel/` the library, `umbriel/test/` the ERT suites,
 `dev/umbriel-test-runner.el` the batch runner, `bin/` the paren checker.
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).
