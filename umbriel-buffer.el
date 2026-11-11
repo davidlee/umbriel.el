@@ -912,7 +912,8 @@ The prompt offers the layouts in model order.  Empty input is a
 (defcustom umbriel-buffer-known-pads '("main" "secondary" "tertiary")
   "Pads the send prompt offers even while empty.
 The IPC names only pads holding windows.  A name here must also be a
-`[[scratchpad]]' in umbriel's config, the only way to create a pad."
+`[[scratchpad]]' in umbriel's config, the only way to create a pad.
+The default is umbriel's default set of pads."
   :type '(repeat string)
   :group 'umbriel)
 

@@ -187,7 +187,7 @@ focused, with no focus step. `RET`, `t` and `k` refuse a workspace row
 `v` refuses it (`Not a window`).
 
 `P` offers the pads that hold windows, plus the option `umbriel-buffer-known-pads`
-(`main`, `secondary`, `tertiary`), because the IPC lists no empty pads. Any other empty pad must be typed.
+(by default umbriel's own set: `main`, `secondary`, `tertiary`), because the IPC lists no empty pads. Any other empty pad must be typed.
 Pads exist only as `[[scratchpad]]` entries in umbriel's config, so `P` cannot
 create one, and umbriel rejects a name it does not know. That failure comes after
 the focus step, so focus stays on the row's window.
