@@ -62,6 +62,8 @@ Layout: the library at the root, `test/` the ERT suites,
 `dev/umbriel-test-runner.el` the batch runner, `bin/` the paren checker.
 CI (`.github/workflows/check.yml`) runs `just check` on Emacs 30.1 and master.
 
+Changes: [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).

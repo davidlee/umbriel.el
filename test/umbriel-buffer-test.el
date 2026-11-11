@@ -23,16 +23,15 @@
 
 ;; Run: `just check', or M-x ert RET umbriel-buffer/ RET.
 ;;
-;; Contract: the design of emacs-config:SL-016, § The buffer and § Actions, and
-;; its phase sheets 04 (C-1..C-12, EX-1..EX-7) and 05 (VT-1..VT-5, EX-1..EX-7,
-;; D-1..D-8).
+;; Contract: docs/umbriel.md, sections "The *umbriel* buffer" and
+;; "Addressing".
 ;;
 ;; Nothing here reaches a compositor.  Every test runs inside
 ;; `umbriel-buffer-test--with-state', which binds `process-environment' to a
 ;; socket path that does not exist, stubs the stream open/close pair, and kills
 ;; *umbriel* on the way out with the stubs still in place.  Fixtures are
-;; hand-written alists in the emacs-config:DEC-013 shape; no title, app id or name below is
-;; real.
+;; hand-written alists in the shape `umbriel-ipc' parses; no title, app id or
+;; name below is real.
 ;;
 ;; One batch-mode caveat: `format-mode-line' returns "" in `emacs --batch'
 ;; whatever it is given (there is no terminal to render a mode line on), so the
@@ -159,7 +158,7 @@ Enough rows that the rendered tree is taller than a batch window."
   "/nonexistent/umbriel-test/umbriel.sock"
   "The `UMBRIEL_SOCKET' every test binds: a path nothing listens on.")
 
-;;;; Isolation (C-12)
+;;;; Isolation
 
 (defvar umbriel-buffer-test--stream-log nil
   "Stream calls made by the default stubs, newest first.")
@@ -207,7 +206,7 @@ in place, and the window configuration is restored."
          (when-let* ((buffer (get-buffer umbriel-buffer-name)))
            (with-current-buffer buffer
              ;; A faked timer is not a timer: clear it, so the kill hook's
-             ;; cancel (C-9) cannot signal now that the stubs are gone.
+             ;; Cancel cannot signal now that the stubs are gone.
              (when (and umbriel-buffer--repaint-timer
                         (not (timerp umbriel-buffer--repaint-timer)))
                (setq umbriel-buffer--repaint-timer nil)))
@@ -228,7 +227,7 @@ A `run-at-time' whose FUNCTION is `umbriel-buffer--repaint-due' is
 recorded in CALLS as `(DELAY REPEAT FUNCTION ARGS)' and answered with a
 faked timer; a `run-with-idle-timer' for that function fails the test.
 `cancel-timer' and `timer-set-time' fail the test when their TIMER is
-one of ours, because the throttle never cancels or re-arms (C-6).
+one of ours, because the throttle never cancels or re-arms.
 Every other call -- auto-revert and friends in a full init -- goes to
 the original function."
   (declare (indent 1))
@@ -477,14 +476,14 @@ callback or a timer is checked for never prompting."
                   0)))
        ,@body)))
 
-;;;; scratchpads (emacs-config:SL-017)
+;;;; scratchpads
 
 (defconst umbriel-buffer-test--toggle
   (assq 'umbriel-toggle-scratchpad umbriel-buffer-actions)
   "The pad toggle's row of the action table.")
 
 (ert-deftest umbriel-buffer--plan/toggles-the-pad-of-a-heading-or-row ()
-  "emacs-config:DEC-029: the name comes from a pad heading or a pad window's row."
+  "The name comes from a pad heading or a pad window's row."
   (let ((expected (list (umbriel-action
                          "scratchpad-toggle" '((scratchpad . "signal"))))))
     (should (equal expected
@@ -498,7 +497,7 @@ callback or a timer is checked for never prompting."
                     nil nil)))))
 
 (ert-deftest umbriel-buffer--plan/refuses-to-toggle-outside-a-pad ()
-  "emacs-config:DEC-029: a plain window row or a workspace row has no pad to toggle."
+  "A plain window row or a workspace row has no pad to toggle."
   (dolist (target (list (list :window (umbriel-buffer-test--window))
                         (list :workspace (umbriel-buffer-test--workspace))))
     (should (equal "Not in a scratchpad"
@@ -506,7 +505,7 @@ callback or a timer is checked for never prompting."
                                             target nil nil)))))
 
 (ert-deftest umbriel-buffer--plan/other-actions-refuse-a-pad-heading ()
-  "emacs-config:DEC-030: a pad heading names no window, so nothing else acts on it."
+  "A pad heading names no window, so nothing else acts on it."
   (dolist (spec umbriel-buffer-actions)
     (unless (eq spec umbriel-buffer-test--toggle)
       (should (stringp (umbriel-buffer--plan
@@ -584,7 +583,7 @@ callback or a timer is checked for never prompting."
            "M-x umbriel-set-active-layout")))
 
 (ert-deftest umbriel-buffer--target/reads-a-pad-heading ()
-  "emacs-config:DEC-029: point on a pad heading targets that pad."
+  "Point on a pad heading targets that pad."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held
        (list (umbriel-buffer-test--window
@@ -597,11 +596,11 @@ callback or a timer is checked for never prompting."
       (should (equal '(:scratchpad "signal") (umbriel-buffer--target))))))
 
 (ert-deftest umbriel-buffer/v-toggles-the-pad ()
-  "emacs-config:DEC-031: `v' is the pad toggle."
+  "`v' is the pad toggle."
   (should (eq 'umbriel-toggle-scratchpad
               (keymap-lookup umbriel-buffer-mode-map "v"))))
 
-;;;; sending a window to a pad (emacs-config:IMP-031)
+;;;; sending a window to a pad
 
 (defconst umbriel-buffer-test--send-to-pad
   (assq 'umbriel-send-to-pad umbriel-buffer-actions)
@@ -724,10 +723,10 @@ callback or a timer is checked for never prompting."
   (should (eq 'umbriel-send-to-pad
               (keymap-lookup umbriel-buffer-mode-map "P"))))
 
-;;;; render (VT-1, EX-1)
+;;;; render
 
 (ert-deftest umbriel-buffer/draws-a-section-per-pad ()
-  "emacs-config:DEC-028: pads sit between workspaces and Unassigned, with their windows."
+  "Pads sit between workspaces and Unassigned, with their windows."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held
        (append (umbriel-buffer-test--fixture-windows)
@@ -755,7 +754,7 @@ callback or a timer is checked for never prompting."
                  (umbriel-buffer-test--heading (nth 3 top))))))))
 
 (ert-deftest umbriel-buffer/renders-the-held-state ()
-  "VT-1/EX-1: section types and id values, windows nested, Unassigned last."
+  "Section types and id values, windows nested, Unassigned last."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -786,7 +785,7 @@ callback or a timer is checked for never prompting."
                                #'string<))))))))
 
 (ert-deftest umbriel-buffer/workspace-heading-counts-the-join ()
-  "VT-1: a workspace heading carries the number of windows the join placed."
+  "A workspace heading carries the number of windows the join placed."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -802,7 +801,7 @@ callback or a timer is checked for never prompting."
                                   (umbriel-buffer-test--heading (nth 2 top)))))))))
 
 (ert-deftest umbriel-buffer/renders-the-empty-state ()
-  "VT-1/EX-1: with nothing held the body is the one empty-state line."
+  "With nothing held the body is the one empty-state line."
   (umbriel-buffer-test--with-state nil
     (let ((buffer (umbriel-buffer-test--mode-buffer)))
       (with-current-buffer buffer
@@ -812,7 +811,7 @@ callback or a timer is checked for never prompting."
         (should (eq (oref (umbriel-buffer-test--root) type) 'umbriel-root))
         (should-not (umbriel-buffer-test--children))))))
 
-;;;; active and focused windows (emacs-config:IMP-030)
+;;;; active and focused windows
 
 (defun umbriel-buffer-test--top-face (pos)
   "The face of the highest-priority overlay at POS that sets one, or nil."
@@ -890,7 +889,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
                                       umbriel-buffer-focused-window)))
                             (overlays-in (point-min) (point-max)))))))
 
-;;;; active workspace (emacs-config:IMP-030)
+;;;; active workspace
 
 (defun umbriel-buffer-test--activate-workspace (id)
   "Make workspace ID the only `active' one and repaint."
@@ -1264,7 +1263,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
     (should (eq 'umbriel-buffer-active-window
                 (umbriel-buffer-test--row-face "w-abc")))))
 
-;;;; columns (emacs-config:IMP-030)
+;;;; columns
 
 (defun umbriel-buffer-test--stops (section)
   "The `:align-to' columns on SECTION's first line, left to right."
@@ -1406,10 +1405,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
                                                              "w-def")
                                start)))))))
 
-;;;; header (VT-2, EX-2)
+;;;; header
 
 (ert-deftest umbriel-buffer/header-names-the-stream ()
-  "VT-2/EX-2: open and never get their sentence, each failure its message."
+  "Open and never get their sentence, each failure its message."
   (should (equal "umbriel: stream open"
                  (umbriel-buffer--header-text 'open 0)))
   (should (equal "umbriel: stream never opened"
@@ -1423,7 +1422,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
       (should-not (string-match-p "\n" text)))))
 
 (ert-deftest umbriel-buffer/header-shows-skipped-lines ()
-  "VT-2: the skipped count appears only when non-zero, singular for one."
+  "The skipped count appears only when non-zero, singular for one."
   (let ((none (umbriel-buffer--header-text 'open 0))
         (one (umbriel-buffer--header-text 'open 1))
         (three (umbriel-buffer--header-text 'open 3)))
@@ -1435,7 +1434,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
     (should (string-match-p "3 lines skipped" three))))
 
 (ert-deftest umbriel-buffer/header-doubles-percent ()
-  "VT-2/EX-2: a compositor `%' is doubled, so the display shows one."
+  "A compositor `%' is doubled, so the display shows one."
   (let* ((failure (list :failure 'closed "50% of the docs"))
          (text (umbriel-buffer--header-text failure 0)))
     (should (stringp text))
@@ -1457,10 +1456,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
           (should-not (string-match-p "50%[^%]" rendered))
           (should (umbriel-buffer-test--percent-pairs-p rendered)))))))
 
-;;;; throttle (VT-3, EX-3)
+;;;; throttle
 
 (ert-deftest umbriel-buffer/throttle-coalesces-state-changes ()
-  "VT-3/EX-3/F-11: five changes ride one `run-at-time'; a later one adds one."
+  "Five changes ride one `run-at-time'; a later one adds one."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1491,7 +1490,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (setq umbriel-buffer--repaint-timer nil)))))
 
 (ert-deftest umbriel-buffer/throttle-hooks-the-state-changed-hook ()
-  "VT-3: the mode adds one hook entry, and one hook run schedules one timer."
+  "The mode adds one hook entry, and one hook run schedules one timer."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1508,10 +1507,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
       (should (equal umbriel-buffer-repaint-delay (nth 0 (car calls))))
       (setq umbriel-buffer--repaint-timer nil))))
 
-;;;; point, folds and stale (VT-4, EX-4)
+;;;; point, folds and stale
 
 (ert-deftest umbriel-buffer/repaint-keeps-point-across-a-reorder ()
-  "VT-4a/EX-4: point stays on the same window section when the row moves."
+  "Point stays on the same window section when the row moves."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--order-windows 0 0)
                                     (umbriel-buffer-test--point-workspaces))
@@ -1533,7 +1532,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
           (should (/= before (line-number-at-pos))))))))
 
 (ert-deftest umbriel-buffer/repaint-keeps-a-non-selected-windows-point ()
-  "VT-4b/C-5: a window that does not have the buffer selected keeps its point."
+  "A window that does not have the buffer selected keeps its point."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--order-windows 0 0)
                                     (umbriel-buffer-test--point-workspaces))
@@ -1564,7 +1563,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (should (= point (oref section start)))))))
 
 (ert-deftest umbriel-buffer/repaint-keeps-a-folded-workspace-folded ()
-  "VT-4c/EX-4: hiding a workspace survives a repaint, through magit's cache."
+  "Hiding a workspace survives a repaint, through magit's cache."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1579,7 +1578,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
             (should after)
             (should-not (eq after before))
             (should (oref after hidden))
-            ;; R-1: a real fold, not just the slot: the body is invisible
+            ;; A real fold, not just the slot: the body is invisible
             ;; and the heading is not.
             (let ((child (car (umbriel-buffer-test--children after))))
               (should child)
@@ -1588,7 +1587,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
               (should-not (invisible-p (oref after start))))))))))
 
 (ert-deftest umbriel-buffer/undisplayed-buffer-goes-stale ()
-  "VT-4d/C-6: a repaint due while nothing shows the buffer only marks it."
+  "A repaint due while nothing shows the buffer only marks it."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1609,7 +1608,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
           (setq umbriel-buffer--repaint-timer nil))))))
 
 (ert-deftest umbriel-buffer/display-hook-schedules-without-editing ()
-  "VT-4d/C-7: showing a stale buffer schedules; only the timer repaints."
+  "Showing a stale buffer schedules; only the timer repaints."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1646,10 +1645,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
             (should-not (buffer-local-value 'umbriel-buffer--stale buffer)))
           (setq umbriel-buffer--repaint-timer nil))))))
 
-;;;; no connection (VT-5, EX-5, F-14)
+;;;; no connection
 
 (ert-deftest umbriel-buffer/mode-and-render-never-connect ()
-  "VT-5/EX-5: the mode, the render path and the header open no stream."
+  "The mode, the render path and the header open no stream."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1685,10 +1684,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
     ;; The counting stubs saw nothing either.
     (should-not umbriel-buffer-test--stream-log)))
 
-;;;; lifecycle (VT-6, EX-7, F-2)
+;;;; lifecycle
 
 (ert-deftest umbriel-buffer/umbriel-opens-once-and-kill-closes-once ()
-  "VT-6/EX-7: creating opens once; bury, quit and re-invoke keep it."
+  "Creating opens once; bury, quit and re-invoke keep it."
   (umbriel-buffer-test--with-state nil
     (umbriel-buffer-test--with-timers calls
       (umbriel)
@@ -1698,7 +1697,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (should (eq (buffer-local-value 'major-mode buffer)
                     'umbriel-buffer-mode))
         (should (get-buffer-window buffer t))
-        ;; C-9/D-1: the kill hook is buffer-local, never a global default.
+        ;; The kill hook is buffer-local, never a global default.
         (should (memq #'umbriel-buffer--on-kill
                       (buffer-local-value 'kill-buffer-hook buffer)))
         (should-not (memq #'umbriel-buffer--on-kill
@@ -1724,7 +1723,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
       (should-not calls))))
 
 (ert-deftest umbriel-buffer/refresh-reconnects-only-when-shut ()
-  "VT-6/C-10: `g' repaints when the stream is open, reconnects when not."
+  "`g' repaints when the stream is open, reconnects when not."
   (umbriel-buffer-test--with-state (umbriel-buffer-test--held nil nil 'open 0)
     (umbriel-buffer-test--mode-buffer)
     (umbriel-buffer-test--with-timers calls
@@ -1747,12 +1746,12 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (setq umbriel-buffer--repaint-timer nil)))))
 
 (ert-deftest umbriel-buffer/g-refreshes ()
-  "VT-6/C-11: `g' in the buffer map is `umbriel-buffer-refresh'."
+  "`g' in the buffer map is `umbriel-buffer-refresh'."
   (should (eq (lookup-key umbriel-buffer-mode-map "g")
               #'umbriel-buffer-refresh)))
 
 (ert-deftest umbriel-buffer/mode-and-constants ()
-  "C-1/C-2: the buffer name, the repaint delay and the mode's parent."
+  "The buffer name, the repaint delay and the mode's parent."
   (umbriel-buffer-test--with-state nil
     (should (equal "*umbriel*" umbriel-buffer-name))
     (should (equal 0.1 umbriel-buffer-repaint-delay))
@@ -1763,10 +1762,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (should (local-variable-p 'window-buffer-change-functions))
         (should (eq (car-safe header-line-format) :eval))))))
 
-;;;; pending timers and a dead buffer (C-6, C-9)
+;;;; pending timers and a dead buffer
 
 (ert-deftest umbriel-buffer/kill-cancels-a-pending-repaint ()
-  "C-9: killing *umbriel* cancels its pending repaint, exactly once."
+  "Killing *umbriel* cancels its pending repaint, exactly once."
   (umbriel-buffer-test--with-state nil
     (let ((fake (list 'fake-timer))
           (cancelled nil))
@@ -1783,7 +1782,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (should (= 1 (umbriel-buffer-test--count 'close)))))))
 
 (ert-deftest umbriel-buffer/repaint-due-after-kill-is-harmless ()
-  "C-6: a repaint due after the buffer died does nothing and signals nothing."
+  "A repaint due after the buffer died does nothing and signals nothing."
   (umbriel-buffer-test--with-state nil
     (let ((fake (list 'fake-timer))
           (due nil))
@@ -1804,7 +1803,7 @@ There w-abc is both `active' and `focused', and w-def is neither."
           (should-not umbriel-buffer--repaint-timer))))))
 
 (ert-deftest umbriel-buffer/no-buffer-schedules-nothing ()
-  "C-6: with no *umbriel* buffer live, scheduling does nothing."
+  "With no *umbriel* buffer live, scheduling does nothing."
   (umbriel-buffer-test--with-state nil
     (should-not (get-buffer umbriel-buffer-name))
     (let ((calls 0))
@@ -1816,10 +1815,10 @@ There w-abc is both `active' and `focused', and w-def is neither."
         (should (= 0 calls))
         (should-not umbriel-buffer--repaint-timer)))))
 
-;;;; review fixes (T-3..T-6)
+;;;; review fixes
 
 (ert-deftest umbriel-buffer/kill-cancels-after-the-close-announces ()
-  "T-3/R-4: the close may run the state hook; the kill still cancels last.
+  "The close may run the state hook; the kill still cancels last.
 A real `umbriel-stream-close' announces, so a kill that closed first
 would see the hook arm a fresh timer; cancelling afterwards leaves none."
   (umbriel-buffer-test--with-state nil
@@ -1849,7 +1848,7 @@ would see the hook arm a fresh timer; cancelling afterwards leaves none."
         (should (= 1 (umbriel-buffer-test--count 'close)))))))
 
 (ert-deftest umbriel-buffer/repaint-unmodifies-and-highlights ()
-  "T-4/R-2/R-3: a repaint leaves no modification and re-highlights point."
+  "A repaint leaves no modification and re-highlights point."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--fixture-windows)
                                     (umbriel-buffer-test--fixture-workspaces))
@@ -1872,7 +1871,7 @@ would see the hook arm a fresh timer; cancelling afterwards leaves none."
                           magit-section-highlight-overlays))))))
 
 (ert-deftest umbriel-buffer/repaint-keeps-the-window-start ()
-  "T-5/R-5: a repaint leaves the window showing the same top section."
+  "A repaint leaves the window showing the same top section."
   (umbriel-buffer-test--with-state
       (umbriel-buffer-test--held (umbriel-buffer-test--tall-windows)
                                     (umbriel-buffer-test--point-workspaces))
@@ -1902,7 +1901,7 @@ would see the hook arm a fresh timer; cancelling afterwards leaves none."
                                        value)))))))))
 
 (ert-deftest umbriel-buffer/leaves-a-foreign-buffer-alone ()
-  "T-6/R-6: a buffer that merely bears the name is never drawn into."
+  "A buffer that merely bears the name is never drawn into."
   (umbriel-buffer-test--with-state nil
     (let ((foreign (get-buffer-create umbriel-buffer-name)))
       (with-current-buffer foreign
@@ -1915,10 +1914,9 @@ would see the hook arm a fresh timer; cancelling afterwards leaves none."
         (umbriel-buffer--schedule-repaint)
         (should-not calls)))))
 
-;;;; actions (PHASE-05)
+;;;; actions
 ;;
-;; Contract: emacs-config:SL-016 phase sheet 05 (Contract, Gates, D-1..D-8) and
-;; its design sections Actions and Keys.
+;; Contract: docs/umbriel.md, sections "Keys" and "Addressing".
 ;;
 ;; Nothing here reaches a socket either.  Where a test only wants the plan a
 ;; command built, `umbriel-send-all' is faked; where a test wants the real
@@ -1948,8 +1946,8 @@ would see the hook arm a fresh timer; cancelling afterwards leaves none."
 (defun umbriel-buffer-test--action-workspaces-focusing (id)
   "The action workspaces, the focused one's `focused_window' set to ID.
 ID is stored as given: a window id, \"\" or nil.  The plain action
-workspaces carry no `focused_window' at all, which emacs-config:DEC-025 reads as
-unknown."
+workspaces carry no `focused_window' at all, which the restore step reads
+as unknown."
   (mapcar (lambda (workspace)
             (if (alist-get 'focused workspace)
                 (cons (cons 'focused_window id)
@@ -1973,7 +1971,7 @@ unknown."
     (umbriel-toggle-scratchpad "scratchpad-toggle" scratchpad)
     (umbriel-send-to-pad "window-move-to-scratchpad" pointer-window pad))
   "The design's action table, as this file expects it to be held.
-emacs-config:DEC-025: moving a window to a workspace goes silently, so the
+Moving a window to a workspace goes silently, so the
 plan's own focus steps are the only ones the user sees.")
 
 ;;;; actions: helpers
@@ -1997,7 +1995,7 @@ plan's own focus steps are the only ones the user sees.")
 (defun umbriel-buffer-test--refused (spec target fields workspaces)
   "The refusal `umbriel-buffer--plan' gives SPEC for TARGET.
 Fails unless the answer is a string and the same string whether FIELDS
-is given or nil: a refusal may not depend on FIELDS (D-3)."
+is given or nil: a refusal may not depend on FIELDS."
   (let ((with (umbriel-buffer--plan spec target fields workspaces))
         (without (umbriel-buffer--plan spec target nil workspaces)))
     (should (stringp with))
@@ -2065,10 +2063,10 @@ our timers and passes foreign ones through."
                     (funcall orig-cancel timer)))))
        ,@body)))
 
-;;;; actions: the plan (VT-1, EX-1, D-1..D-3)
+;;;; actions: the plan
 
 (ert-deftest umbriel-buffer/plan-window-addressing ()
-  "VT-1/EX-1: `window' acts on the row's id and refuses a workspace row."
+  "`window' acts on the row's id and refuses a workspace row."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces))
          (windows (umbriel-buffer-test--action-windows))
          (window (nth 0 windows))
@@ -2102,7 +2100,7 @@ our timers and passes foreign ones through."
       (should (umbriel-buffer-test--mentions-p refusal "not a window")))))
 
 (ert-deftest umbriel-buffer/plan-focused-addressing ()
-  "VT-1/EX-1: `focused' focuses the row's window first; a workspace row acts."
+  "`focused' focuses the row's window first; a workspace row acts."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces))
          (windows (umbriel-buffer-test--action-windows))
          (window (nth 0 windows))
@@ -2130,7 +2128,7 @@ our timers and passes foreign ones through."
                                             nil workspaces)))))
 
 (ert-deftest umbriel-buffer/plan-workspace-addressing ()
-  "VT-1/EX-1: `workspace' switches by selector; an Unassigned window refuses."
+  "`workspace' switches by selector; an Unassigned window refuses."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces))
          (windows (umbriel-buffer-test--action-windows))
          (window (nth 0 windows))
@@ -2223,7 +2221,7 @@ the focused workspace included (user ruling)."
         (should (umbriel-buffer-test--switches-p plan))))))
 
 (ert-deftest umbriel-buffer/plan-layout-refuses-a-foreign-output ()
-  "VT-2/EX-2/emacs-config:RV-018 F-6: a layout off the pointer's output is refused.
+  "A layout off the pointer's output is refused.
 The refusal is a string with no requests in it -- never a partial plan."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces))
          (windows (umbriel-buffer-test--action-windows))
@@ -2246,7 +2244,7 @@ The refusal is a string with no requests in it -- never a partial plan."
                    (umbriel-buffer--plan spec
                                             (list :workspace (nth 1 workspaces))
                                             fields workspaces)))
-    ;; D-2: nothing is marked focused, so the output cannot be checked.
+    ;; nothing is marked focused, so the output cannot be checked.
     (let* ((unfocused
             (list (umbriel-buffer-test--workspace :id "DP-1:1" :index 1
                                                      :output "DP-1")
@@ -2260,7 +2258,7 @@ The refusal is a string with no requests in it -- never a partial plan."
       (should-not (umbriel-buffer-test--switches-p result)))))
 
 (ert-deftest umbriel-buffer/plan-restores-focus-after-acting ()
-  "emacs-config:DEC-025: a `focused' plan on a window row ends by restoring PREVIOUS.
+  "A `focused' plan on a window row ends by restoring PREVIOUS.
 PREVIOUS is the focused workspace's `focused_window'; FIELDS belong to
 the action, never to the restore, and the loose window restores too."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces-focusing
@@ -2285,7 +2283,7 @@ the action, never to the restore, and the loose window restores too."
                                               given workspaces))))))
 
 (ert-deftest umbriel-buffer/plan-no-restore-when-already-focused ()
-  "emacs-config:DEC-025: PREVIOUS equal to the row's window id plans no restore step."
+  "PREVIOUS equal to the row's window id plans no restore step."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces-focusing
                       "w-dp1"))
          (windows (umbriel-buffer-test--action-windows))
@@ -2302,7 +2300,7 @@ the action, never to the restore, and the loose window restores too."
                                             nil workspaces)))))
 
 (ert-deftest umbriel-buffer/plan-no-restore-when-previous-unknown ()
-  "emacs-config:DEC-025: an unknown PREVIOUS plans focus-then-act and no restore.
+  "An unknown PREVIOUS plans focus-then-act and no restore.
 Unknown is: `focused_window' \"\", nil or absent, no focused workspace,
 and more than one focused workspace."
   (let* ((windows (umbriel-buffer-test--action-windows))
@@ -2340,7 +2338,7 @@ and more than one focused workspace."
             (should-not (member restore plan))))))))
 
 (ert-deftest umbriel-buffer/plan-no-restore-for-a-workspace-row ()
-  "emacs-config:DEC-025: `focused' on a workspace row is [ACTION], restore or not."
+  "`focused' on a workspace row is [ACTION], restore or not."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces-focusing
                       "w-dp2"))
          (spec (umbriel-buffer-test--spec 'focused "window-center"))
@@ -2352,7 +2350,7 @@ and more than one focused workspace."
                                                 given workspaces)))))))
 
 (ert-deftest umbriel-buffer/plan-other-addressing-never-restores ()
-  "emacs-config:DEC-025: `window', `workspace' and `active-workspace' plan as before.
+  "`window', `workspace' and `active-workspace' plan as before.
 A known PREVIOUS adds no `window-focus' step to any of them."
   (let* ((plain (umbriel-buffer-test--action-workspaces))
          (restoring (umbriel-buffer-test--action-workspaces-focusing
@@ -2381,10 +2379,10 @@ A known PREVIOUS adds no `window-focus' step to any of them."
               (when (listp with)
                 (should-not (funcall restores-p with))))))))))
 
-;;;; actions: kill (VT-2, EX-3, F-19, D-4)
+;;;; actions: kill
 
 (ert-deftest umbriel-buffer/kill-refuses-emacs-own-process ()
-  "VT-2/EX-3/F-19: killing Emacs's own pid refuses; nothing asked or sent."
+  "Killing Emacs's own pid refuses; nothing asked or sent."
   (let ((windows (list (umbriel-buffer-test--window
                         :id "w-self" :workspace "DP-1:1"
                         :app_id "emacs" :title "notes.org"
@@ -2410,7 +2408,7 @@ A known PREVIOUS adds no `window-focus' step to any of them."
                 (should-not umbriel-buffer-test--refreshes)))))))))
 
 (ert-deftest umbriel-buffer/kill-prompt-names-the-window ()
-  "VT-2/EX-3: the confirmation names app id, title and pid; -1 as well."
+  "The confirmation names app id, title and pid; -1 as well."
   (dolist (pid (list 4242 -1))
     (let* ((id (format "w-pid-%d" pid))
            (windows (list (umbriel-buffer-test--window
@@ -2438,7 +2436,7 @@ A known PREVIOUS adds no `window-focus' step to any of them."
                                (car (car umbriel-buffer-test--send-all-calls))))))))))))
 
 (ert-deftest umbriel-buffer/kill-confirms-the-captured-window ()
-  "VT-2/EX-3: point and held state moving under the prompt redirect nothing."
+  "Point and held state moving under the prompt redirect nothing."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows)))
     (umbriel-buffer-test--with-state
@@ -2471,7 +2469,7 @@ A known PREVIOUS adds no `window-focus' step to any of them."
                              (car (car umbriel-buffer-test--send-all-calls)))))))))))
 
 (ert-deftest umbriel-buffer/kill-declined-sends-nothing ()
-  "VT-2/D-4: answering no sends nothing, refreshes nothing, says nothing."
+  "Answering no sends nothing, refreshes nothing, says nothing."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows)))
     (umbriel-buffer-test--with-state
@@ -2491,7 +2489,7 @@ A known PREVIOUS adds no `window-focus' step to any of them."
                   (should-not umbriel-buffer-test--refreshes)
                   (should-not umbriel-buffer-test--messages))))))))))
 
-;;;; actions: prompts (D-3)
+;;;; actions: prompts
 
 (ert-deftest umbriel-buffer/workspace-prompt-offers-the-held-workspaces ()
   "Prompts: `m' completes over the model choices and sends the selector."
@@ -2594,7 +2592,7 @@ prompt unless the table declares identity for display and cycle."
                                     (nth 2 call))))))))))))))
 
 (ert-deftest umbriel-buffer/refused-row-never-prompts ()
-  "D-3: a refused row errors before prompting and before sending anything."
+  "A refused row errors before prompting and before sending anything."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows)))
     (umbriel-buffer-test--with-state
@@ -2664,10 +2662,10 @@ prompt unless the table declares identity for display and cycle."
                        "No umbriel row at point"))))
         (should-not umbriel-buffer-test--send-all-calls))))))
 
-;;;; actions: completion (VT-5, EX-7, emacs-config:DEC-021, D-6)
+;;;; actions: completion
 
 (ert-deftest umbriel-buffer/completion-refreshes-only-when-shut ()
-  "VT-5/EX-7: one refresh, after the reply, and only with the stream shut."
+  "One refresh, after the reply, and only with the stream shut."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows))
         (status 'open))
@@ -2705,7 +2703,7 @@ prompt unless the table declares identity for display and cycle."
                     (should-not umbriel-buffer-test--messages)))))))))))
 
 (ert-deftest umbriel-buffer/completion-reads-the-stream-status-late ()
-  "VT-5/emacs-config:DEC-021: the status is read as the reply lands, not when it is sent."
+  "The status is read as the reply lands, not when it is sent."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows))
         (status 'open))
@@ -2734,7 +2732,7 @@ prompt unless the table declares identity for display and cycle."
                 (should-not umbriel-buffer-test--refreshes)))))))))
 
 (ert-deftest umbriel-buffer/completion-echoes-a-failure ()
-  "VT-5/EX-7: a failure reaches the echo as its message; no refresh."
+  "A failure reaches the echo as its message; no refresh."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows))
         (failure '(:failure rejected "no such window")))
@@ -2755,7 +2753,7 @@ prompt unless the table declares identity for display and cycle."
               (should-not umbriel-buffer-test--refreshes))))))))
 
 (ert-deftest umbriel-buffer/completion-stops-at-the-first-failure ()
-  "VT-5/EX-7: the real sequencer stops; step two is never sent."
+  "The real sequencer stops; step two is never sent."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows))
         (sent nil))
@@ -2785,7 +2783,7 @@ prompt unless the table declares identity for display and cycle."
                   (should-not umbriel-buffer-test--refreshes))))))))))
 
 (ert-deftest umbriel-buffer/completion-sends-the-restore-last ()
-  "emacs-config:DEC-025/EX-7: focus, act, restore -- three requests, in that order.
+  "Focus, act, restore -- three requests, in that order.
 Each one leaves only after the previous replied successfully."
   (let ((workspaces (umbriel-buffer-test--action-workspaces-focusing "w-dp2"))
         (windows (umbriel-buffer-test--action-windows))
@@ -2813,7 +2811,7 @@ Each one leaves only after the previous replied successfully."
                 (should-not umbriel-buffer-test--refreshes)))))))))
 
 (ert-deftest umbriel-buffer/completion-a-failed-action-skips-the-restore ()
-  "emacs-config:DEC-025/EX-7: a failed action stops the plan; the restore is never sent."
+  "A failed action stops the plan; the restore is never sent."
   (let ((workspaces (umbriel-buffer-test--action-workspaces-focusing "w-dp2"))
         (windows (umbriel-buffer-test--action-windows))
         (failure '(:failure rejected "no such window"))
@@ -2842,7 +2840,7 @@ Each one leaves only after the previous replied successfully."
                 (should-not umbriel-buffer-test--refreshes)))))))))
 
 (ert-deftest umbriel-buffer/completion-echoes-a-failed-restore ()
-  "emacs-config:DEC-025/EX-7: the restore is sent last; its failure echoes like any other."
+  "The restore is sent last; its failure echoes like any other."
   (let ((workspaces (umbriel-buffer-test--action-workspaces-focusing "w-dp2"))
         (windows (umbriel-buffer-test--action-windows))
         (failure '(:failure closed "umbriel went away"))
@@ -2873,7 +2871,7 @@ Each one leaves only after the previous replied successfully."
                 (should-not umbriel-buffer-test--refreshes)))))))))
 
 (ert-deftest umbriel-buffer/row-action-writes-no-held-state ()
-  "VT-5/emacs-config:DEC-021: neither the command nor its callback writes held state."
+  "Neither the command nor its callback writes held state."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows)))
     (umbriel-buffer-test--with-state
@@ -2901,10 +2899,10 @@ Each one leaves only after the previous replied successfully."
                              '(:ok nil)))))
             (should (equal before (umbriel-state))))))))))
 
-;;;; actions: the global commands (VT-3, EX-4, D-5, D-7)
+;;;; actions: the global commands
 
 (ert-deftest umbriel-buffer/global-switch-refreshes-then-schedules ()
-  "VT-3/EX-4/D-5: a shut stream refreshes; the prompt waits for a timer."
+  "A shut stream refreshes; the prompt waits for a timer."
   (let ((status 'never)
         (workspaces (umbriel-buffer-test--action-workspaces))
         (choices nil))
@@ -2945,7 +2943,7 @@ Each one leaves only after the previous replied successfully."
                                (car (car umbriel-buffer-test--send-all-calls))))))))))))
 
 (ert-deftest umbriel-buffer/global-switch-messages-inside-a-minibuffer ()
-  "VT-3/EX-4: a minibuffer already active when the timer runs is respected."
+  "A minibuffer already active when the timer runs is respected."
   (let ((status 'never)
         (workspaces (umbriel-buffer-test--action-workspaces)))
     (umbriel-buffer-test--with-state
@@ -2975,7 +2973,7 @@ Each one leaves only after the previous replied successfully."
                            "C-c z w")))))))))))
 
 (ert-deftest umbriel-buffer/global-switch-echoes-a-refresh-failure ()
-  "VT-3/EX-4: a failed refresh is echoed and schedules nothing."
+  "A failed refresh is echoed and schedules nothing."
   (let ((status 'never)
         (workspaces (umbriel-buffer-test--action-workspaces))
         (failure '(:failure closed "stream closed")))
@@ -2997,7 +2995,7 @@ Each one leaves only after the previous replied successfully."
                 (should-not umbriel-buffer-test--send-all-calls)))))))))
 
 (ert-deftest umbriel-buffer/global-switch-prompts-at-once-when-open ()
-  "D-5/VT-3: an open stream prompts in the command, refreshing nothing first."
+  "An open stream prompts in the command, refreshing nothing first."
   (let ((status 'open)
         (workspaces (umbriel-buffer-test--action-workspaces)))
     (umbriel-buffer-test--with-state
@@ -3020,7 +3018,7 @@ Each one leaves only after the previous replied successfully."
                                (car (car umbriel-buffer-test--send-all-calls))))))))))))
 
 (ert-deftest umbriel-buffer/no-row-callback-prompts ()
-  "VT-5/EX-7: no row command's send-all callback opens any prompt.
+  "No row command's send-all callback opens any prompt.
 The row sits in a pad, so that every action in the table has a target;
 a send to a pad, which refuses a pad window, gets a plain row instead."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
@@ -3060,7 +3058,7 @@ a send to a pad, which refuses a pad window, gets a plain row instead."
                   (setq umbriel-buffer-test--prompt-allowed t))))))))))
 
 (ert-deftest umbriel-buffer/set-active-layout-prompts-the-pointer ()
-  "D-7: the global layout command names the pointer and sends the layout."
+  "The global layout command names the pointer and sends the layout."
   (let ((status 'open))
     (umbriel-buffer-test--with-state nil
       (umbriel-buffer-test--with-fake-status status
@@ -3095,10 +3093,10 @@ a send to a pad, which refuses a pad window, gets a plain row instead."
                        '(:ok nil))
               (should (= 1 (length umbriel-buffer-test--refreshes))))))))))
 
-;;;; actions: keys and commands (VT-4, § Macro)
+;;;; actions: keys and commands
 
 (ert-deftest umbriel-buffer/row-keys-bind-the-actions ()
-  "VT-4: every row key in the sheet's table, and its twin, is bound."
+  "Every row key in the sheet's table, and its twin, is bound."
   (dolist (binding '(("RET" . umbriel-focus)
                      ("s" . umbriel-switch)
                      ("m" . umbriel-move-to-workspace)
@@ -3164,7 +3162,7 @@ a send to a pad, which refuses a pad window, gets a plain row instead."
     (should (custom-variable-p option))))
 
 (ert-deftest umbriel-buffer/scroll-keys-are-gone ()
-  "emacs-config:DEC-026: the buffer keeps column moves and leaves scrolling to umbriel.
+  "The buffer keeps column moves and leaves scrolling to umbriel.
 No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
   (dolist (key '("C-<left>" "[" "C-<right>" "]"))
     (should-not (keymap-lookup umbriel-buffer-mode-map key)))
@@ -3172,7 +3170,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
   (should-not (fboundp 'umbriel-scroll-right)))
 
 (ert-deftest umbriel-buffer/action-rows-are-commands ()
-  "VT-4/§Macro: every table row is an interactive command with a docstring."
+  "Every table row is an interactive command with a docstring."
   (dolist (row umbriel-buffer-test--action-table)
     (let ((command (nth 0 row)))
       (should (fboundp command))
@@ -3184,18 +3182,16 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
           (should (<= (length line) 80)))))))
 
 (ert-deftest umbriel-buffer/action-table-is-the-designs ()
-  "§Macro: the table holds the design's rows, verbatim, in order."
+  "The table holds the design's rows, verbatim, in order."
   (should (equal umbriel-buffer-test--action-table
                  umbriel-buffer-actions)))
 
 ;;;; actions: review fixes
 ;;
-;; Contract: the review of emacs-config:SL-016 phase 05, R-1..R-7.
-;; T-1..T-6 pin behaviour the review asked for and the implementation did not
-;; have yet; T-7 and T-8 pin behaviour it already had.
+;; Behaviour a design review asked for, pinned.
 
 (ert-deftest umbriel-buffer/layout-refuses-two-focused-workspaces ()
-  "T-1/R-1/F-6: two `focused' workspaces is no answer, so refuse."
+  "Two `focused' workspaces is no answer, so refuse."
   (let* ((workspaces
           (list (umbriel-buffer-test--workspace :id "DP-1:1" :index 1
                                                    :output "DP-1" :focused t)
@@ -3217,7 +3213,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
         (should-not (umbriel-buffer-test--switches-p result))))))
 
 (ert-deftest umbriel-buffer/unknown-prompt-kind-refuses-to-send ()
-  "T-2/R-2: an unknown PROMPT kind fails closed: it signals, sends nothing."
+  "An unknown PROMPT kind fails closed: it signals, sends nothing."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows)))
     (umbriel-buffer-test--with-state
@@ -3240,7 +3236,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
               (should-not umbriel-buffer-test--send-all-calls))))))))
 
 (ert-deftest umbriel-buffer/kill-prompt-keeps-a-newline-out ()
-  "T-3/R-3: the confirmation stays one line and still names id, title, pid."
+  "The confirmation stays one line and still names id, title, pid."
   (let ((windows (list (umbriel-buffer-test--window
                         :id "w-multiline" :workspace "DP-1:1"
                         :app_id "foot" :title "notes\nsecret" :pid 4242))))
@@ -3264,7 +3260,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
               (should-not umbriel-buffer-test--send-all-calls))))))))
 
 (ert-deftest umbriel-buffer/kill-compares-the-pid-numerically ()
-  "T-4/R-4: a float pid names the same process; a string pid prompts."
+  "A float pid names the same process; a string pid prompts."
   (let ((windows (list (umbriel-buffer-test--window
                         :id "w-float" :workspace "DP-1:1"
                         :app_id "emacs" :title "notes"
@@ -3302,7 +3298,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
               (should-not umbriel-buffer-test--send-all-calls))))))))
 
 (ert-deftest umbriel-buffer/unknown-addressing-signals ()
-  "T-5/R-6: a plan for an addressing the table does not know signals."
+  "A plan for an addressing the table does not know signals."
   (let ((workspaces (umbriel-buffer-test--action-workspaces))
         (windows (umbriel-buffer-test--action-windows))
         (spec (umbriel-buffer-test--spec 'sideways "window-focus")))
@@ -3312,7 +3308,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
                     :type 'error))))
 
 (ert-deftest umbriel-buffer/global-switch-with-no-workspaces-held ()
-  "T-6/R-7: nothing held still refreshes, then the timer messages."
+  "Nothing held still refreshes, then the timer messages."
   (umbriel-buffer-test--with-state (umbriel-buffer-test--held nil nil 'open 0)
     (umbriel-buffer-test--with-send-all
       (umbriel-buffer-test--with-refresh
@@ -3340,7 +3336,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
                        "workspace")))))))))
 
 (ert-deftest umbriel-buffer/the-prompt-does-not-re-read-the-held-workspaces ()
-  "T-7: the workspaces captured before the prompt are planned with."
+  "The workspaces captured before the prompt are planned with."
   (let* ((workspaces (umbriel-buffer-test--action-workspaces))
          (windows (umbriel-buffer-test--action-windows))
          (target (nth 1 workspaces))
@@ -3379,7 +3375,7 @@ No `C-<left>'/`[' or `C-<right>'/`]' row key, and no scroll commands."
                              (car (car umbriel-buffer-test--send-all-calls)))))))))))
 
 (ert-deftest umbriel-buffer/docstrings-name-their-action ()
-  "T-8/§Macro: each generated docstring names its umbriel action string."
+  "Each generated docstring names its umbriel action string."
   (dolist (row umbriel-buffer-test--action-table)
     (let ((doc (documentation (nth 0 row))))
       (should (stringp doc))

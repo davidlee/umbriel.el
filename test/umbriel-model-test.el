@@ -23,9 +23,9 @@
 
 ;; Run: `just check', or M-x ert RET umbriel-model/ RET.
 ;;
-;; The model is pure: hand-written alists in the emacs-config:DEC-013 shape in, data or
-;; strings out.  No test reaches a real compositor, and every title, app id and
-;; name below is invented.
+;; The model is pure: hand-written alists in the shape `umbriel-ipc' parses
+;; in, data or strings out.  No test reaches a real compositor, and every
+;; title, app id and name below is invented.
 
 ;;; Code:
 
@@ -96,16 +96,16 @@ A non-string fails the test as an assertion instead of erroring below."
   (should (stringp value))
   (if (stringp value) value ""))
 
-;; The EX-4 subprocess needs the directory holding the model, found the
+;; The purity test's subprocess needs the directory holding the model, found the
 ;; way `require' found it above, not from `default-directory'.
 (defvar umbriel-model-test--model-dir
   (file-name-directory (locate-library "umbriel-model"))
   "The directory holding `umbriel-model'.")
 
-;;;; group (C-1, C-2, VT-1)
+;;;; group
 
 (ert-deftest umbriel-model-window-scratchpad/names-only-a-real-pad ()
-  "emacs-config:DEC-028: a non-empty string is a pad; anything else is none."
+  "A non-empty string is a pad; anything else is none."
   (should (equal "signal" (umbriel-model-window-scratchpad
                            (umbriel-model-test--window :scratchpad "signal"))))
   (dolist (value (list "" nil 3 umbriel-model-test--unset))
@@ -122,7 +122,7 @@ A non-string fails the test as an assertion instead of erroring below."
                         (umbriel-model-test--window))))))
 
 (ert-deftest umbriel-model-group/pads-sit-between-workspaces-and-unassigned ()
-  "emacs-config:DEC-028: pads by name after the workspaces; a shown pad window stays in its pad."
+  "Pads by name after the workspaces; a shown pad window stays in its pad."
   (let* ((held (umbriel-model-test--workspace))
          (joined (umbriel-model-test--window :id "w-1"))
          (shown (umbriel-model-test--window :id "w-2" :scratchpad "signal"))
@@ -146,7 +146,7 @@ A non-string fails the test as an assertion instead of erroring below."
     (should (= 5 (length (umbriel-model-test--windows groups))))))
 
 (ert-deftest umbriel-model-group-cells/gives-a-pad-heading-cells ()
-  "emacs-config:DEC-028: a pad's cells have the workspace's columns, layout and marks empty."
+  "A pad's cells have the workspace's columns, layout and marks empty."
   (let ((cells (umbriel-model-group-cells '((scratchpad . "signal")) 2)))
     (should (equal "scratchpad" (alist-get 'id cells)))
     (should (equal "signal" (alist-get 'name cells)))
@@ -161,7 +161,7 @@ A non-string fails the test as an assertion instead of erroring below."
                    (umbriel-model-group-cells workspace 2)))))
 
 (ert-deftest umbriel-model-group/keeps-every-window ()
-  "emacs-config:RV-018 F-7: no window is dropped, whatever its `workspace' field says.
+  "No window is dropped, whatever its `workspace' field says.
 Scratchpad (\"\"), nil, absent and unknown ids all land in the final
 Unassigned group, which is last."
   (let* ((held (umbriel-model-test--workspace :id "DP-1:1" :name "web" :index 1))
@@ -384,7 +384,7 @@ Unassigned group, which is last."
                                                           other)))))
 
 (ert-deftest umbriel-model-workspace-choices/labels-in-display-order ()
-  "`(LABEL . WORKSPACE)' pairs in the C-1 workspace order, labels are strings."
+  "`(LABEL . WORKSPACE)' pairs in display order, labels are strings."
   (let* ((dp2 (umbriel-model-test--workspace :id "DP-1:2" :name "notes"
                                                 :index 2 :output "DP-1"))
          (hdmi (umbriel-model-test--workspace :id "HDMI-A-1:3" :name nil
@@ -411,7 +411,7 @@ Unassigned group, which is last."
     (should-not (umbriel-model-test--word-p label "window"))
     (should-not (string-match-p "7" label))))
 
-;;;; window label (C-7, C-8, C-9, VT-3)
+;;;; window label
 
 (ert-deftest umbriel-model-window-label/active-and-focused-are-independent ()
   "Seat-global `active' and the workspace's remembered `focused' are separate."
@@ -517,7 +517,7 @@ Unassigned group, which is last."
   (should-not (string-match-p "[\n\t]"
                               (umbriel-model-window-label '((id . "w-1"))))))
 
-;;;; workspace label (C-6, C-8, C-9, VT-3)
+;;;; workspace label
 
 (ert-deftest umbriel-model-window-cells/columns-in-order ()
   "A window's cells are its label's parts, keyed by column."
@@ -639,7 +639,7 @@ Unassigned group, which is last."
                               (umbriel-model-workspace-label
                                '((id . "DP-1:1"))))))
 
-;;;; layouts (C-10)
+;;;; layouts
 
 (ert-deftest umbriel-model/layouts-are-the-contract-list ()
   "`umbriel-model-layouts' is the constant list the actions offer."
@@ -647,7 +647,7 @@ Unassigned group, which is last."
   (should (equal umbriel-model-layouts
                  '("scrolling" "dwindle" "master" "stacking" "toggle"))))
 
-;;;; purity (C-11, EX-4)
+;;;; purity
 
 (ert-deftest umbriel-model/loads-without-the-client ()
   "A fresh `emacs -Q --batch' loads the model and leaves `umbriel' unloaded."

@@ -11,6 +11,18 @@ Emacs Lisp package: an Emacs client for the umbriel Wayland compositor.
 - `.elpaignore` keeps non-library files out of package installs.
 - `docs/umbriel.md` design and usage notes.
 
+## The compositor socket
+
+The session shell can reach the live umbriel socket. Read-only probes
+(queries) are fine. Mutating actions (focus, kill, switch, layout) are the
+user's to take. Sandboxed (jailed) workers lack the socket.
+
+## Design history
+
+The decisions behind this code (DEC-016..031, backlog IDE-003) are records in
+the author's emacs-config repo. Code and docs here state the reasoning
+directly and do not cite them.
+
 ## Gate
 
 `just check` (inside `nix develop`) is green: lint (paren check, byte-compile

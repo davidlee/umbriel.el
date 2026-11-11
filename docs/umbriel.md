@@ -15,9 +15,6 @@ IPC (inter-process communication) socket, from these files:
 Only `umbriel-ipc.el` touches the socket. The buffer and the focus mode are its
 two consumers.
 
-Records cited below (`DEC-n` for a decision, `IDE-n` for a backlog idea)
-are the author's decision and backlog records (their `emacs-config:` prefix names the config repo that holds them).
-
 ## The socket
 
 Every message is one JSON object on one line. The server answers
@@ -38,14 +35,6 @@ The path is resolved from the environment, as the `umbriel` CLI does:
 2. otherwise `$XDG_RUNTIME_DIR/umbriel-$WAYLAND_DISPLAY.sock`.
 
 When neither resolves, the failure names the unset variables.
-
-### Reachability from the agent environment
-
-The agent environment can reach this socket from the session shell. Read-only
-probes (queries) are fine. Mutating actions (focus, kill, switch, layout) are
-the user's to take. Sandboxed (jailed) workers lack the socket. An earlier
-emacs-config:SL-016 premise, that no compositor was reachable from the agent environment,
-was wrong.
 
 ### Why the socket, not the CLI
 
@@ -204,7 +193,7 @@ create one, and umbriel rejects a name it does not know. That failure comes afte
 the focus step, so focus stays on the row's window.
 
 There are no scroll keys: strip scrolling is a viewport action, not an action
-on the row at point (emacs-config:DEC-026). Use umbriel's own bindings.
+on the row at point. Use umbriel's own bindings.
 
 `?` shows the mode's help, which lists these keys as bound.
 
@@ -252,8 +241,8 @@ the prompt, so a refused row never asks anything.
 
 - **Focus, act, restore.** For a focused-only action on a window that is not
   the focused one, Emacs focuses it, acts, then refocuses the window the
-  focused workspace held before (normally this Emacs frame), when that is known
-  (emacs-config:DEC-025). Expect a brief flicker. The previous focus comes from held state
+  focused workspace held before (normally this Emacs frame), when that is known.
+  Expect a brief flicker. The previous focus comes from held state
   and can be stale if the buffer lags; a vanished window makes the restore
   fail and the failure is echoed. A failed action stops the sequence, so no
   restore is sent. Moving a window to a workspace uses the `-silent` action,
@@ -303,17 +292,10 @@ no `*umbriel*` buffer. A frame with no match is silent; a failure is echoed.
 The match is on pid and title. Two frames showing the same buffer share a
 title, so the first match wins and the other frame may not be the one focused.
 A reliable fix, giving each frame a unique token title through a creation
-handshake, is recorded as emacs-config:IDE-003 (a backlog idea).
+handshake, is not implemented yet.
 
 ## Emacs holds no layout authority
 
 Emacs shows what the compositor reports and sends requests. It keeps no layout
 state of its own and applies no effect locally. Whether a request had an effect
 is known only when the next snapshot says so.
-
-## Records
-
-- emacs-config:DEC-016: row actions address by id or selector; focus first where an action
-  takes only the focused window.
-- emacs-config:DEC-024: key choices. emacs-config:DEC-025: restore previous focus. emacs-config:DEC-026: scroll
-  actions dropped.

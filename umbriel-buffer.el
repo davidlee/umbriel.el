@@ -44,7 +44,7 @@
 ;;
 ;; A repaint keeps what the user would notice: every displaying window's
 ;; point returns to the section it was on, and folds survive through
-;; magit's visibility cache.  See emacs-config:DEC-022.
+;; magit's visibility cache.
 
 ;;; Code:
 
@@ -723,8 +723,7 @@ whatever holds the keyboard: only a workspace window on that output can
 be the one it acts on).  PROMPT, when given, is `workspace',
 `pad-workspace', `layout', `pad' or `confirm-kill'; a prompting
 row prompts in its command, never in a reply.  Moving a window goes
-silently, so the plan's own focus steps are the only ones seen
-(emacs-config:DEC-025)."))
+silently, so the plan's own focus steps are the only ones seen."))
 
 (defun umbriel-buffer--target ()
   "The held entry the row at point addresses, as a one-pair plist.
@@ -753,7 +752,7 @@ entry here is what keeps a later prompt from redirecting the action."
 (defun umbriel-buffer--focused-workspace (workspaces)
   "The one workspace in WORKSPACES umbriel marks focused, or nil.
 umbriel marks at most one; with none focused, or with more than one,
-there is no answer, and nil is how callers read that (D-2, R-1)."
+there is no answer, and nil is how callers read that."
   (let ((focused (seq-filter (lambda (held) (alist-get 'focused held))
                              workspaces)))
     (when (= 1 (length focused))
@@ -763,7 +762,8 @@ there is no answer, and nil is how callers read that (D-2, R-1)."
   "Non-nil unless WORKSPACE is on the output under the pointer.
 That is the output of the `focused' workspace in WORKSPACES.  With
 none focused, or with more than one, there is no answer, and refusing
-is the conservative reading of F-6 (D-2, R-1)."
+is the conservative reading: a layout sent to the wrong output would
+change a workspace the user is not looking at."
   (if-let* ((focused (umbriel-buffer--focused-workspace workspaces)))
       (not (equal (alist-get 'output workspace)
                   (alist-get 'output focused)))
@@ -772,7 +772,7 @@ is the conservative reading of F-6 (D-2, R-1)."
 (defun umbriel-buffer--previous-focus (workspaces)
   "The window id a `focused' plan restores afterwards, or nil.
 That is the `focused_window' of the focused workspace in WORKSPACES,
-which umbriel sends as \"\" when no window is focused (emacs-config:DEC-025).  A
+which umbriel sends as \"\" when no window is focused.  A
 workspace that is not known, or a `focused_window' that is absent, nil
 or empty, leaves the focus unknown."
   (when-let* ((focused (umbriel-buffer--focused-workspace workspaces))
@@ -782,7 +782,7 @@ or empty, leaves the focus unknown."
 (defun umbriel-buffer--focus-act-restore (id act workspaces)
   "The requests that focus window ID, send ACT, then restore the focus.
 With no known previous focus in WORKSPACES, or when that is ID itself,
-there is nothing to restore (emacs-config:DEC-025)."
+there is nothing to restore."
   (let ((previous (umbriel-buffer--previous-focus workspaces))
         (focus (umbriel-action "window-focus" (list (cons 'window id)))))
     (if (and previous (not (equal previous id)))
@@ -796,16 +796,16 @@ there is nothing to restore (emacs-config:DEC-025)."
 SPEC is a row of `umbriel-buffer-actions', TARGET the plist
 `umbriel-buffer--target' returned, FIELDS the prompted action
 fields or nil, and WORKSPACES the held workspaces.  Pure: it reads no
-other state (D-1).  A refusal is a string with no requests in it and
+other state.  A refusal is a string with no requests in it and
 depends on nothing but SPEC, TARGET and WORKSPACES, which is what lets
-a command refuse a row before it prompts (D-3).  A `focused' window
+a command refuse a row before it prompts.  A `focused' window
 row whose known previous focus is a different window plans one more
-`window-focus' at the end, putting that focus back (emacs-config:DEC-025).  An
+`window-focus' at the end, putting that focus back.  An
 `active-workspace' row switches to its workspace unless that is the
 focused one, in which case it only acts: switching to a workspace
 umbriel already holds active toggles back under `back_and_forth'.  A
 `scratchpad' row names the pad of its heading or window; any other
-addressing refuses a pad heading, which has no window (emacs-config:DEC-030).  A
+addressing refuses a pad heading, which has no window.  A
 `workspace' row on a pad window with no workspace sends the action with
 FIELDS, the workspace the user picked.  A `pointer-window' row plans as
 a `focused' one, but refuses any row the action would not reach: it
@@ -935,7 +935,7 @@ know.  Empty input is a `user-error', as for a workspace."
 (defun umbriel-buffer--confirm-kill (window)
   "Return nil when the user confirms killing WINDOW, `declined' when not.
 Emacs's own pid refuses at once, before any prompt: killing it would
-take the editor with it (emacs-config:DEC-019, F-19).  The prompt reuses
+take the editor with it.  The prompt reuses
 the row's label, so compositor text arrives sanitised to one line; WINDOW was
 captured before the prompt, so a repaint cannot redirect the kill."
   (let ((pid (alist-get 'pid window)))
@@ -977,7 +977,7 @@ prompt must never send unconfirmed."
   "Act on the reply RESULT, then re-query unless the stream is open.
 A failure is echoed and never refreshed; a success is silent.  The
 stream status is read when the reply lands, not when the request left:
-with the stream open the effect arrives on its own (emacs-config:DEC-021)."
+with the stream open the effect arrives on its own."
   (if (eq (car result) :failure)
       (umbriel-echo-failure result)
     (unless (eq (umbriel-stream-status) 'open)
@@ -985,7 +985,7 @@ with the stream open the effect arrives on its own (emacs-config:DEC-021)."
 
 (defun umbriel-buffer--run (spec)
   "Send what SPEC plans for the row at point, refusing and prompting.
-The target is captured and the plan refused before any prompt (D-3),
+The target is captured and the plan refused before any prompt,
 and the plan is refused again once the prompted fields are in, so a
 refusal never reaches `umbriel-send-all'.  The prompts read the
 held state; the reply is left to `umbriel-buffer--completion'.  A
@@ -1035,7 +1035,7 @@ The global commands act where the pointer is, not on a row."
 
 (defun umbriel-buffer--switch-later ()
   "Switch workspaces from a timer, or say why there is nothing to switch to.
-A refresh's reply may not prompt, so it schedules this instead (D-5);
+A refresh's reply may not prompt, so it schedules this instead;
 an active minibuffer asks for a retry, and so does the reply holding
 no workspace at all."
   (cond ((active-minibuffer-window)
@@ -1053,7 +1053,7 @@ The prompt runs now only while the stream is open and workspaces are
 held; otherwise the state is refreshed first and the prompt follows
 the reply in a timer, so no prompt ever runs inside a process
 callback.  A reply that still holds no workspace is not prompted
-from -- it says so instead (D-5, R-7)."
+from -- it says so instead."
   (interactive)
   (if (and (eq (umbriel-stream-status) 'open)
            (umbriel-workspaces))

@@ -29,8 +29,8 @@
 ;; can be tested without a compositor and reused by any front end.  No
 ;; process, buffer or input is touched.
 ;;
-;; Entries are alists in the shape emacs-config:DEC-013 parses out of the
-;; wire: JSON false, null and `[]' all arrive as nil, so every read is
+;; Entries are alists in the shape `umbriel-ipc' parses out of the wire:
+;; JSON false, null and `[]' all arrive as nil, so every read is
 ;; `alist-get' with a default (`""' for strings, `-1' for positions and
 ;; `index', nil for flags).  A field renamed upstream degrades a label
 ;; instead of signalling, and no entry -- even an empty one -- makes a function here signal.
@@ -141,7 +141,7 @@ The result is a list of `(OWNER . WINDOWS)' groups in display order:
 workspaces by output and index, kept even with nil windows, then a
 `((scratchpad . NAME))' owner per pad by name, then a final
 `(nil . WINDOWS)' group for what joins neither, omitted when empty.  A
-window joins its pad when it has one (emacs-config:DEC-028), else the
+window joins its pad when it has one, else the
 workspace whose `id' equals its `workspace'.  Every window appears exactly
 once, entries are returned as given, and neither input is mutated."
   (let* ((ordered (sort workspaces :key #'umbriel-model--workspace-key))

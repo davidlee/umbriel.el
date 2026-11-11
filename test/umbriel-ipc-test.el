@@ -193,7 +193,7 @@ Return a function answering the results recorded so far, oldest first."
       (should (eq (plist-get args :noquery) t)))))
 
 (ert-deftest umbriel-ipc/send-delivers-one-reply-once ()
-  "emacs-config:RV-018 F-9: the synchronous sentinel run by `delete-process' delivers nothing."
+  "The synchronous sentinel run by `delete-process' delivers nothing."
   (umbriel-ipc-test--with-net net
     (let ((results (umbriel-ipc-test--results
                      (umbriel-send (umbriel-query "windows") deliver))))
@@ -206,7 +206,7 @@ Return a function answering the results recorded so far, oldest first."
       (should (equal (funcall results) '((:ok nil)))))))
 
 (ert-deftest umbriel-ipc/send-signalling-write-is-closed ()
-  "emacs-config:RV-018 F-8: a write on a connection the server closed reports closed once."
+  "A write on a connection the server closed reports closed once."
   (umbriel-ipc-test--with-net net
     (setf (umbriel-ipc-test--net-write-error net) '(error "Process umbriel not running"))
     (let ((results (umbriel-ipc-test--results
@@ -216,7 +216,7 @@ Return a function answering the results recorded so far, oldest first."
         (other (ert-fail (list 'unexpected other)))))))
 
 (ert-deftest umbriel-ipc/send-close-after-partial-line-is-closed ()
-  "emacs-config:RV-018 F-8: text without a newline at close is not a reply."
+  "Text without a newline at close is not a reply."
   (umbriel-ipc-test--with-net net
     (let ((results (umbriel-ipc-test--results
                      (umbriel-send (umbriel-query "windows") deliver))))
@@ -311,7 +311,7 @@ no test inherits an `open' stream or a leftover waiter from another."
        t))
 
 (ert-deftest umbriel-ipc/set-family-replaces-wholesale-and-is-readable ()
-  "EX-1: a family is replaced, never merged, and the readers see it."
+  "A family is replaced, never merged, and the readers see it."
   (umbriel-ipc-test--with-state
     (umbriel--set-family 'windows '(((id . "w-1")) ((id . "w-2"))))
     (should (equal (umbriel-windows) '(((id . "w-1")) ((id . "w-2")))))
@@ -400,7 +400,7 @@ no test inherits an `open' stream or a leftover waiter from another."
     (should (= (umbriel-skipped) 0))))
 
 (ert-deftest umbriel-ipc/stream-line-unrequested-family-bumps-skipped ()
-  "A family we did not subscribe to is counted, never fatal (VT-1)."
+  "A family we did not subscribe to is counted, never fatal."
   (umbriel-ipc-test--with-state
     (let ((runs 0))
       (let ((umbriel-state-changed-hook (list (lambda () (cl-incf runs)))))
@@ -414,7 +414,7 @@ no test inherits an `open' stream or a leftover waiter from another."
 
 (ert-deftest umbriel-ipc/stream-line-malformed-bumps-skipped-without-error ()
   "A line that is not what we expect is counted and skipped; a signal would
-fail this test, and C-4 puts a reply-shaped object in the same bucket."
+fail this test, and a reply-shaped object lands in the same bucket."
   (umbriel-ipc-test--with-state
     (umbriel--stream-line "not json at all")
     (should (= (umbriel-skipped) 1))
@@ -426,7 +426,7 @@ fail this test, and C-4 puts a reply-shaped object in the same bucket."
     (should-not (umbriel-windows))))
 
 (ert-deftest umbriel-ipc/stream-line-err-line-is-rejected ()
-  "C-1: the err line sets `rejected' *before* closing, so the close's own
+  "The err line sets `rejected' *before* closing, so the close's own
 sentinel cannot overwrite it with `closed'."
   (umbriel-ipc-test--with-state
     (umbriel-ipc-test--with-net net
@@ -467,7 +467,7 @@ sentinel cannot overwrite it with `closed'."
       (should (eq (umbriel-stream-status) 'open)))))
 
 (ert-deftest umbriel-ipc/stream-open-twice-makes-one-connection ()
-  "emacs-config:RV-019 F-2: opening an open stream is a no-op, not a second subscriber."
+  "Opening an open stream is a no-op, not a second subscriber."
   (umbriel-ipc-test--with-state
     (umbriel-ipc-test--with-net net
       (umbriel-stream-open)
@@ -581,7 +581,7 @@ sentinel cannot overwrite it with `closed'."
       (should-not (umbriel-ipc-test--net-sent net)))))
 
 (ert-deftest umbriel-ipc/no-auto-reconnect-after-a-serverside-close ()
-  "emacs-config:RV-019 F-2 / emacs-config:DEC-018: nothing reconnects by itself; `g' is the reconnect."
+  "Nothing reconnects by itself; `g' is the reconnect."
   (umbriel-ipc-test--with-state
     (umbriel-ipc-test--with-net net
       (umbriel-stream-open)
@@ -647,7 +647,7 @@ sentinel cannot overwrite it with `closed'."
         (should (= (length (funcall results)) 1))))))
 
 (ert-deftest umbriel-ipc/await-fails-at-once-when-the-stream-is-not-open ()
-  "C-3: registering while not open fails at once, without running the
+  "Registering while not open fails at once, without running the
 predicate; a failed stream hands over the failure it already has."
   (umbriel-ipc-test--with-state
     (umbriel-ipc-test--with-net net
@@ -771,7 +771,7 @@ stop the hook or a waiter that becomes true on the same change."
 ;;;; Refresh
 
 (ert-deftest umbriel-ipc/refresh-writes-both-families-through-the-setter ()
-  "VT-4: two queries, both `(:ok DATA)' replies routed through the setter."
+  "Two queries, both `(:ok DATA)' replies routed through the setter."
   (umbriel-ipc-test--with-state
     (let ((runs 0))
       (let ((umbriel-state-changed-hook (list (lambda () (cl-incf runs)))))
